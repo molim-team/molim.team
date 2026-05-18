@@ -177,7 +177,88 @@ function Main() {
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   return (
-    <>
+    <div className="main-home-container px-4 md:px-6">
+      <style>{`
+        /* Responsive utility styles for Main page component */
+        .main-home-container {
+          width: 100%;
+        }
+        .px-4 {
+          padding-left: 1rem !important;
+          padding-right: 1rem !important;
+        }
+        
+        /* Retain full-width hero bg */
+        .main-home-container > .hero {
+          margin-left: -1rem !important;
+          margin-right: -1rem !important;
+        }
+
+        @media (min-width: 768px) {
+          .md\\:px-6 {
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
+          }
+          .main-home-container > .hero {
+            margin-left: -1.5rem !important;
+            margin-right: -1.5rem !important;
+          }
+        }
+
+        /* Available Scholarships stack vertically on mobile and horizontally on desktop */
+        @media (max-width: 767px) {
+          #open-scholarships-grid.flex-col {
+            flex-direction: column !important;
+            overflow-x: visible !important;
+            padding: 0 0 20px 0 !important;
+            gap: 20px !important;
+          }
+          #open-scholarships-grid.flex-col .card,
+          #open-scholarships-grid.flex-col .skeleton-card {
+            min-width: 100% !important;
+            max-width: 100% !important;
+            width: 100% !important;
+          }
+          /* Hide slider buttons on mobile */
+          .slider-wrapper .slider-btn {
+            display: none !important;
+          }
+        }
+
+        @media (min-width: 768px) {
+          #open-scholarships-grid.md\\:flex-row {
+            flex-direction: row !important;
+            overflow-x: auto !important;
+          }
+        }
+
+        /* About Molim Section layout */
+        .cards-wrapper.flex-col {
+          display: flex !important;
+          flex-direction: column !important;
+          gap: 20px !important;
+        }
+        .cards-wrapper.flex-col > .about-card,
+        .cards-wrapper.flex-col > a {
+          width: 100% !important;
+          display: block;
+        }
+        .cards-wrapper.flex-col > a > .about-card {
+          width: 100% !important;
+        }
+
+        @media (min-width: 768px) {
+          .cards-wrapper.md\\:flex-row {
+            flex-direction: row !important;
+          }
+          .cards-wrapper.md\\:flex-row > .about-card,
+          .cards-wrapper.md\\:flex-row > a {
+            flex: 1 !important;
+            width: auto !important;
+          }
+        }
+      `}</style>
+
       {/* هيرو */}
       <section className="hero">
         <div className="hero-logo-wrap">
@@ -209,7 +290,7 @@ function Main() {
           <button className="slider-btn prev" onClick={() => slideCards(-1)}>&#8250;</button>
           <div 
             id="open-scholarships-grid" 
-            className="cards-grid"
+            className="cards-grid flex-col md:flex-row"
             ref={gridRef}
             onMouseDown={handleMouseDown}
             onMouseLeave={handleMouseLeave}
@@ -277,7 +358,7 @@ function Main() {
       {/* من نحن */}
       <section className="about-section">
         <h2 className="section-title"> عن مُلم </h2>
-        <div className="cards-wrapper">
+        <div className="cards-wrapper flex-col md:flex-row">
           <div className="about-card">
             <span className="about-icon">🎯</span>
             <h3>من نحن</h3>
@@ -459,7 +540,7 @@ function Main() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
 

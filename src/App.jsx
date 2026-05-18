@@ -6,7 +6,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from './firebase-config';
 
 // استيراد الصفحات والمكونات بمطابقة تامة لأسماء ملفاتك في المجلد
-import Main from './Main'; 
+import Main from './main'; 
 import Scholarships from './Scholarships'; 
 import ScholarshipDetails from './Scholarship'; 
 import FAQ from './Faq';
@@ -27,16 +27,6 @@ import './style.css';
 function Header() {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleDarkMode = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -69,11 +59,21 @@ function Header() {
         </Link>
       </div>
 
+      <button 
+        className={`menu-toggle ${isMenuOpen ? 'active' : ''}`} 
+        onClick={toggleMenu}
+        aria-label="قائمة التنقل"
+      >
+        <span className="bar"></span>
+        <span className="bar"></span>
+        <span className="bar"></span>
+      </button>
+
       <nav id="main-nav" className={isMenuOpen ? 'open' : ''}>
         <Link to="/" onClick={closeMenu}>الرئيسية</Link>
         <Link to="/scholarships" onClick={closeMenu}>المنح</Link>
-        <Link to="/quiz" onClick={closeMenu}>اكتشف التخصص المناسب لك</Link>
-        <Link to="/major/all" onClick={closeMenu}>التخصصات العالمية</Link>
+        <Link to="/quiz" onClick={closeMenu}>الاختبار المهني</Link>
+        <Link to="/major/all" onClick={closeMenu}>التخصصات</Link>
         <Link to="/faq" onClick={closeMenu}>الأسئلة الشائعة</Link>
         <Link to="/contact" onClick={closeMenu}>تواصل معنا</Link>
         
@@ -81,26 +81,6 @@ function Header() {
           {getButtonText()}
         </Link>
       </nav>
-
-      <div className="header-left">
-        <button 
-          id="darkModeToggle" 
-          className="dark-mode-toggle" 
-          aria-label="Toggle Dark Mode"
-          onClick={toggleDarkMode}
-        >
-          {theme === 'dark' ? '☀️' : '🌙'}
-        </button>
-        <button 
-          className={`menu-toggle ${isMenuOpen ? 'active' : ''}`} 
-          onClick={toggleMenu}
-          aria-label="قائمة التنقل"
-        >
-          <span className="bar"></span>
-          <span className="bar"></span>
-          <span className="bar"></span>
-        </button>
-      </div>
     </header>
   );
 }
@@ -117,17 +97,13 @@ function Footer() {
           <h4>روابط سريعة</h4>
           <Link to="/">الرئيسية</Link>
           <Link to="/scholarships">جميع المنح</Link>
-          <Link to="/quiz">اكتشف التخصص المناسب لك</Link>
+          <Link to="/quiz">الاختبار المهني</Link>
           <Link to="/faq">الأسئلة الشائعة</Link>
-        </div>
-        <div className="footer-social">
-          <h4>تواصل معنا</h4>
-          <a href="https://t.me/molim_ContactBot" target="_blank" rel="noreferrer"> الدعم الفني - تليجرام</a>
-          <a href="mailto:molim.team@gmail.com"> molim.team@gmail.com</a>
+          <Link to="/privacy">سياسة الخصوصية</Link>
         </div>
       </div>
       <div className="footer-bottom">
-        <p>مُلم © 2026 | جميع الحقوق محفوظة | <Link to="/privacy">سياسة الخصوصية</Link></p>
+        <p>مُلم © 2026 | جميع الحقوق محفوظة</p>
       </div>
     </footer>
   );

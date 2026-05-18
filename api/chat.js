@@ -1,7 +1,7 @@
 import fetch from 'node-fetch'; // تأكد من وجودها إذا كنت تستخدم بيئة Node قديمة، أو احذف السطر إذا كانت البيئة تدعم fetch تلقائياً
 
 export default async function handler(req, res) {
-  const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+  const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY;
   
   // إعدادات الـ CORS لتسمح للفرونت إند (Vite) بالتواصل مع السيرفر
   res.setHeader('Access-Control-Allow-Origin', '*');

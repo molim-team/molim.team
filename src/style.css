@@ -1579,7 +1579,6 @@ footer p {
 
 .details-grid {
   display: grid;
-  grid-templateColumns: 2fr 1fr;
   grid-template-columns: 2fr 1fr;
   gap: 30px;
 }

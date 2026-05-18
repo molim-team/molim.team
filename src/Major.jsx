@@ -9,10 +9,10 @@ function Majors() {
   })));
 
   const [openKey, setOpenKey] = useState(null);
-  const [heights, setHeights] = useState({});
   const contentRefs = useRef({});
   const location = useLocation();
 
+  // التعامل مع الروابط المباشرة (Deep Linking) عند وجود hash في الرابط
   useEffect(() => {
     if (location.hash) {
       const targetKey = decodeURIComponent(location.hash.substring(1));
@@ -20,31 +20,14 @@ function Majors() {
       setTimeout(() => {
         const element = document.getElementById(targetKey);
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 300);
+      }, 500);
     }
   }, [location.hash]);
 
-  useEffect(() => {
-    const newHeights = {};
-    Object.keys(contentRefs.current).forEach(key => {
-      if (contentRefs.current[key]) {
-        newHeights[key] = contentRefs.current[key].scrollHeight;
-      }
-    });
-    setHeights(newHeights);
-  }, [majorsData]);
-
  const toggleFaq = (key) => {
-  const element = document.getElementById(key);
-  const scrollY = window.scrollY;
-  
   setOpenKey(openKey === key ? null : key);
-  
-  setTimeout(() => {
-    window.scrollTo({ top: scrollY, behavior: 'instant' });
-  }, 0);
 };
 
   return (
@@ -57,16 +40,19 @@ function Majors() {
       <section className="faq-section" id="majors-container">
         {majorsData.map((major) => (
           <div className="faq-item" id={major.id} key={major.id}>
-            <div className="faq-question" onClick={() => toggleFaq(major.id)}>
+            <div
+              className={`faq-question ${openKey === major.id ? 'active' : ''}`}
+              onClick={() => toggleFaq(major.id)}
+            >
               <span>{major.name}</span>
               <span className="faq-icon">{openKey === major.id ? '−' : '+'}</span>
             </div>
-
             <div
+              className="faq-collapse-wrapper"
               style={{
-                overflow: 'hidden',
-                transition: 'height 0.4s ease',
-                height: openKey === major.id ? `${heights[major.id] || 0}px` : '0px',
+                height: openKey === major.id
+                  ? `${contentRefs.current[major.id]?.scrollHeight}px`
+                  : '0px'
               }}
             >
               <div
@@ -91,18 +77,24 @@ function Majors() {
                 </ul>
 
                 <div className="major-section-title">الإيجابيات والسلبيات</div>
-                <p className="major-sub-title">الإيجابيات:</p>
+                <div className="pros-cons-grid">
+                  <div>
+                    <p className="major-sub-title pros">✅ الإيجابيات:</p>
                 <ul className="major-list">
-                  {major.pros?.map((pro, idx) => (
-                    <li key={idx}>{pro}</li>
+                      {major.pros?.map((pro, idx) => (
+                        <li key={idx}>{pro}</li>
                   ))}
                 </ul>
-                <p className="major-sub-title">السلبيات:</p>
-                <ul className="major-list">
-                  {major.cons?.map((con, idx) => (
-                    <li key={idx}>{con}</li>
-                  ))}
-                </ul>
+              </div>
+                  <div>
+                    <p className="major-sub-title cons">❌ السلبيات:</p>
+                    <ul className="major-list">
+                      {major.cons?.map((con, idx) => (
+                        <li key={idx}>{con}</li>
+        ))}
+                    </ul>
+    </div>
+                </div>
 
                 <div className="major-section-title">مستقبل السوق</div>
                 <p className="major-text">{major.market_future}</p>

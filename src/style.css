@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Tajawal:wght@400;700;900&display=swap');
 
 * {
   margin: 0;
@@ -130,7 +130,7 @@
 
 body {
   padding-top: 0;
-  font-family: 'Tajawal', sans-serif;
+  font-family: 'Cairo', 'Tajawal', sans-serif;
   background: var(--bg-color);
   color: var(--text-color);
   direction: rtl;
@@ -1458,34 +1458,52 @@ footer p {
 
 .major-section-title {
   color: var(--primary-color, #ff4500);
-  margin-top: 15px;
-  margin-bottom: 8px;
-  font-size: 1.1rem;
-  font-weight: bold;
+  margin-top: 25px;
+  margin-bottom: 12px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  border-right: 4px solid var(--primary-color);
+  padding-right: 10px;
 }
 
 .major-sub-title {
-  color: var(--text-color, #333);
-  font-weight: bold;
-  margin-bottom: 5px;
+  font-weight: 700;
+  margin-top: 15px;
+  margin-bottom: 10px;
+  display: block;
 }
 
+.major-sub-title.pros { color: #27ae60; }
+.major-sub-title.cons { color: #e74c3c; }
+
 .major-text {
-  color: var(--text-color, #333);
-  line-height: 1.6;
-  margin-bottom: 10px;
+  font-size: 1rem;
+  color: var(--text-color);
+  opacity: 0.9;
+  margin-bottom: 15px;
+  text-align: justify;
 }
 
 .major-list {
-  padding-right: 20px;
-  margin-bottom: 10px;
-  list-style-type: disc;
+  list-style: none;
+  padding: 0;
+  margin-bottom: 20px; 
 }
 
 .major-list li {
-  margin-bottom: 5px;
-  color: var(--text-color, #333);
-  line-height: 1.5;
+  position: relative;
+  padding-right: 25px;
+  margin-bottom: 8px;
+  color: var(--text-color);
+}
+
+.major-list li::before {
+  content: "•";
+  color: var(--primary-color);
+  font-weight: bold;
+  position: absolute;
+  right: 0;
+  font-size: 1.2rem;
 }
 
 .major-list.no-margin {
@@ -1836,306 +1854,314 @@ footer p {
 /* تم حذف التنسيقات الإضافية لصفحة تواصل معنا لإعادة التصميم القديم والملون بنسبة 100% كما كان في الموقع الأصلي */
 
 /* ================= تنسيقات لوحة تحكم مُلم الإدارية ================= */
-.admin-container { 
-  max-width: 700px; 
-  margin: 40px auto; 
-  padding: 20px; 
+.admin-container {
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 20px;
 }
 
-.admin-container h1 { 
-  color: var(--primary-color, #ff4500); 
-  text-align: center; 
-  margin-bottom: 20px; 
+.admin-container h1 {
+  color: var(--primary-color, #ff4500);
+  text-align: center;
+  margin-bottom: 20px;
 }
 
 .token-bar {
-  background: var(--card-bg, #fff); 
-  border-radius: 12px; 
+  background: var(--card-bg, #fff);
+  border-radius: 12px;
   padding: 15px;
-  margin-bottom: 20px; 
+  margin-bottom: 20px;
   border: 1px solid var(--primary-color, #ff4500);
 }
 
 .token-bar label {
-  font-weight: 700; 
+  font-weight: 700;
   color: #1a3a6e;
   display: block;
   margin-bottom: 8px;
 }
 
 .token-bar input {
-  width: 100%; 
-  padding: 10px; 
-  border-radius: 8px; 
-  border: 1px solid #ccc; 
-  font-size: 15px; 
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 15px;
   box-sizing: border-box;
   background: var(--bg-color, #fafafa);
   color: var(--text-color, #333);
 }
 
-.tabs { 
-  display: flex; 
-  gap: 10px; 
-  margin-bottom: 25px; 
-  justify-content: center; 
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+  justify-content: center;
 }
 
 .tab-btn {
-  padding: 10px 25px; 
-  border-radius: 10px; 
-  border: none; 
+  padding: 10px 25px;
+  border-radius: 10px;
+  border: none;
   cursor: pointer;
-  font-family: inherit; 
-  font-size: 16px; 
+  font-family: inherit;
+  font-size: 16px;
   font-weight: 700;
   transition: background 0.2s;
 }
 
-.tab-btn.active { 
-  background: var(--primary-color, #ff4500); 
-  color: white; 
+.tab-btn.active {
+  background: var(--primary-color, #ff4500);
+  color: white;
 }
 
-.tab-btn.inactive { 
-  background: #1a3a6e; 
-  color: white; 
+.tab-btn.inactive {
+  background: #1a3a6e;
+  color: white;
 }
 
-.form-group { 
-  margin-bottom: 15px; 
+.form-group {
+  margin-bottom: 15px;
 }
 
-.form-group label { 
-  display: block; 
-  font-weight: 700; 
-  color: #1a3a6e; 
-  margin-bottom: 5px; 
+.form-group label {
+  display: block;
+  font-weight: 700;
+  color: #1a3a6e;
+  margin-bottom: 5px;
 }
 
 .form-group input, .form-group select, .form-group textarea {
-  width: 100%; 
-  padding: 10px; 
+  width: 100%;
+  padding: 10px;
   border-radius: 8px;
-  border: 1px solid var(--primary-color, #ff4500); 
+  border: 1px solid var(--primary-color, #ff4500);
   font-family: inherit;
-  font-size: 15px; 
+  font-size: 15px;
   box-sizing: border-box;
   background: var(--card-bg, #fff);
   color: var(--text-color, #333);
 }
 
-.form-group textarea { 
-  height: 100px; 
+.form-group textarea {
+  height: 100px;
   resize: vertical;
 }
 
 .btn-submit {
-  width: 100%; 
-  padding: 15px; 
-  background: var(--primary-color, #ff4500); 
+  width: 100%;
+  padding: 15px;
+  background: var(--primary-color, #ff4500);
   color: white;
-  border: none; 
-  border-radius: 10px; 
+  border: none;
+  border-radius: 10px;
   font-size: 18px;
-  font-weight: 700; 
-  cursor: pointer; 
+  font-weight: 700;
+  cursor: pointer;
   font-family: inherit;
 }
 
-.btn-submit:hover { 
-  background: #cc3300; 
+.btn-submit:hover {
+  background: #cc3300;
 }
 
 /* إدارة عناصر المنح */
 .scholarship-item {
-  background: var(--card-bg, #fff); 
-  border-radius: 12px; 
+  background: var(--card-bg, #fff);
+  border-radius: 12px;
   padding: 15px 20px;
-  margin-bottom: 12px; 
+  margin-bottom: 12px;
   border: 1px solid #e0e0e0;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  display: flex; 
-  justify-content: space-between; 
+  display: flex;
+  justify-content: space-between;
   align-items: center;
 }
 
-.scholarship-item h3 { 
-  color: var(--primary-color, #ff4500); 
-  margin: 0; 
-  font-size: 16px; 
+.scholarship-item h3 {
+  color: var(--primary-color, #ff4500);
+  margin: 0;
+  font-size: 16px;
 }
 
-.scholarship-item p { 
-  color: #1a3a6e; 
-  margin: 4px 0 0; 
-  font-size: 13px; 
+.scholarship-item p {
+  color: #1a3a6e;
+  margin: 4px 0 0;
+  font-size: 13px;
 }
 
-.item-btns { 
-  display: flex; 
-  gap: 8px; 
+.item-btns {
+  display: flex;
+  gap: 8px;
 }
 
 .btn-edit {
-  padding: 7px 15px; 
-  background: #1a3a6e; 
+  padding: 7px 15px;
+  background: #1a3a6e;
   color: white;
-  border: none; 
-  border-radius: 8px; 
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  font-family: inherit; 
+  font-family: inherit;
   font-weight: 700;
 }
 
 .btn-delete {
-  padding: 7px 15px; 
-  background: #cc0000; 
+  padding: 7px 15px;
+  background: #cc0000;
   color: white;
-  border: none; 
-  border-radius: 8px; 
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  font-family: inherit; 
+  font-family: inherit;
   font-weight: 700;
 }
 
 /* قسم رفع وإدارة الملفات */
 .files-section {
-  border: 1px solid var(--primary-color, #ff4500); 
+  border: 1px solid var(--primary-color, #ff4500);
   border-radius: 10px;
-  padding: 15px; 
-  margin-bottom: 15px; 
+  padding: 15px;
+  margin-bottom: 15px;
   background: var(--bg-color, #fff8f5);
 }
 
 .files-section h4 {
-  color: var(--primary-color, #ff4500); 
-  margin: 0 0 12px 0; 
+  color: var(--primary-color, #ff4500);
+  margin: 0 0 12px 0;
   font-size: 15px;
 }
 
 .sub-title-file {
-  font-weight: 700; 
-  color: #1a3a6e; 
+  font-weight: 700;
+  color: #1a3a6e;
   margin: 0 0 8px;
 }
 
 .file-row {
-  display: flex; 
-  gap: 8px; 
-  align-items: center; 
+  display: flex;
+  gap: 8px;
+  align-items: center;
   margin-bottom: 8px;
 }
 
 .file-row input {
-  flex: 1; 
-  padding: 8px; 
+  flex: 1;
+  padding: 8px;
   border-radius: 8px;
-  border: 1px solid #ccc; 
+  border: 1px solid #ccc;
   font-family: inherit;
-  font-size: 14px; 
+  font-size: 14px;
   box-sizing: border-box;
 }
 
 .btn-add-file {
-  padding: 7px 14px; 
-  background: #1a3a6e; 
+  padding: 7px 14px;
+  background: #1a3a6e;
   color: white;
-  border: none; 
-  border-radius: 8px; 
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  font-family: inherit; 
-  font-size: 13px; 
+  font-family: inherit;
+  font-size: 13px;
   font-weight: 700;
   margin-top: 5px;
 }
 
+.btn-add-file:hover {
+  background: #0f2550;
+}
+
 .btn-remove-file {
-  padding: 6px 10px; 
-  background: #cc0000; 
+  padding: 6px 10px;
+  background: #cc0000;
   color: white;
-  border: none; 
-  border-radius: 7px; 
-  cursor: pointer; 
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
   font-size: 13px;
 }
 
+.btn-remove-file:hover {
+  background: #990000;
+}
+
 .section-divider {
-  border: none; 
+  border: none;
   border-top: 1px dashed var(--primary-color, #ff4500);
   margin: 15px 0;
 }
 
 /* المودال المنبثق للـ Edit */
 .modal-overlay {
-  display: none; 
-  position: fixed; 
-  top: 0; 
+  display: none;
+  position: fixed;
+  top: 0;
   left: 0;
-  width: 100%; 
-  height: 100%; 
+  width: 100%;
+  height: 100%;
   background: rgba(0,0,0,0.5);
-  z-index: 1000; 
-  justify-content: center; 
+  z-index: 1000;
+  justify-content: center;
   align-items: flex-start;
-  padding: 20px; 
-  box-sizing: border-box; 
+  padding: 20px;
+  box-sizing: border-box;
   overflow-y: auto;
 }
 
-.modal-overlay.open { 
-  display: flex; 
+.modal-overlay.open {
+  display: flex;
 }
 
 .modal-box {
-  background: var(--card-bg, #fff); 
-  border-radius: 16px; 
+  background: var(--card-bg, #fff);
+  border-radius: 16px;
   padding: 30px;
-  width: 100%; 
-  max-width: 650px; 
+  width: 100%;
+  max-width: 650px;
   margin: auto;
   box-shadow: 0 10px 40px rgba(0,0,0,0.3);
   position: relative;
 }
 
-.modal-box h2 { 
-  color: var(--primary-color, #ff4500); 
-  text-align: center; 
-  margin-bottom: 20px; 
+.modal-box h2 {
+  color: var(--primary-color, #ff4500);
+  text-align: center;
+  margin-bottom: 20px;
 }
 
 .modal-close {
-  position: absolute; 
-  top: 15px; 
+  position: absolute;
+  top: 15px;
   left: 15px;
-  background: none; 
-  border: none; 
+  background: none;
+  border: none;
   font-size: 24px;
-  cursor: pointer; 
-  color: #666; 
+  cursor: pointer;
+  color: #666;
   line-height: 1;
 }
 
-.modal-close:hover { 
-  color: #cc0000; 
+.modal-close:hover {
+  color: #cc0000;
 }
 
 .btn-save {
-  width: 100%; 
-  padding: 15px; 
-  background: #1a3a6e; 
+  width: 100%;
+  padding: 15px;
+  background: #1a3a6e;
   color: white;
-  border: none; 
-  border-radius: 10px; 
+  border: none;
+  border-radius: 10px;
   font-size: 18px;
-  font-weight: 700; 
-  cursor: pointer; 
+  font-weight: 700;
+  cursor: pointer;
   font-family: inherit;
   margin-top: 5px;
 }
 
-.btn-save:hover { 
-  background: #0f2550; 
+.btn-save:hover {
+  background: #0f2550;
 }
 
 /* تنسيق الرسائل باللوحة */
@@ -2186,7 +2212,7 @@ footer p {
   margin-bottom: 14px;
 }
 
-.privacy-section p, 
+.privacy-section p,
 .privacy-section li {
   color: var(--text-color, #333);
   line-height: 1.9;
@@ -2677,4 +2703,33 @@ footer p {
 
 .gap-4 {
   gap: 1rem !important;
+}
+
+/* تنسيقات الأكورديون المحسنة */
+.faq-collapse-wrapper {
+  overflow: hidden;
+  transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--card-bg);
+}
+
+.answer-content {
+  padding: 10px 25px 40px; /* زيادة الـ padding السفلي لمنع انقطاع النص */
+  border-top: 1px solid var(--card-border);
+  line-height: 1.8;
+}
+
+/* تحسين شكل رأس التخصص عند الفتح */
+.faq-question.active {
+  background: var(--faq-hover-bg);
+  border-bottom: 1px solid transparent;
+}
+
+/* تعديل للهواتف */
+@media (max-width: 768px) {
+  .answer-content {
+    padding: 10px 15px 35px;
+  }
+  .major-section-title {
+    font-size: 1.1rem;
+  }
 }

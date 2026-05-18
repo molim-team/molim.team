@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import majorsDataRaw from './majors_info.json'; 
+import majorsDataRaw from './majors_info.json';
 
 function Majors() {
   const [majorsData] = useState(Object.entries(majorsDataRaw).map(([key, value]) => ({
@@ -9,9 +9,10 @@ function Majors() {
   })));
 
   const [openKey, setOpenKey] = useState(null);
+  const [heights, setHeights] = useState({});
+  const contentRefs = useRef({});
   const location = useLocation();
 
- 
   useEffect(() => {
     if (location.hash) {
       const targetKey = decodeURIComponent(location.hash.substring(1));
@@ -25,9 +26,26 @@ function Majors() {
     }
   }, [location.hash]);
 
-  const toggleFaq = (key) => {
-    setOpenKey(openKey === key ? null : key);
-  };
+  useEffect(() => {
+    const newHeights = {};
+    Object.keys(contentRefs.current).forEach(key => {
+      if (contentRefs.current[key]) {
+        newHeights[key] = contentRefs.current[key].scrollHeight;
+      }
+    });
+    setHeights(newHeights);
+  }, [majorsData]);
+
+ const toggleFaq = (key) => {
+  const element = document.getElementById(key);
+  const scrollY = window.scrollY;
+  
+  setOpenKey(openKey === key ? null : key);
+  
+  setTimeout(() => {
+    window.scrollTo({ top: scrollY, behavior: 'instant' });
+  }, 0);
+};
 
   return (
     <div className="majors-page">
@@ -43,26 +61,35 @@ function Majors() {
               <span>{major.name}</span>
               <span className="faq-icon">{openKey === major.id ? '−' : '+'}</span>
             </div>
-            
-            <div className={`faq-answer ${openKey === major.id ? 'open' : ''}`}>
-              <div className="answer-content h-auto overflow-visible">
+
+            <div
+              style={{
+                overflow: 'hidden',
+                transition: 'height 0.4s ease',
+                height: openKey === major.id ? `${heights[major.id] || 0}px` : '0px',
+              }}
+            >
+              <div
+                className="answer-content"
+                ref={el => contentRefs.current[major.id] = el}
+              >
                 <div className="major-section-title">نظرة عامة</div>
                 <p className="major-text">{major.overview}</p>
-                
+
                 <div className="major-section-title">المواد الأساسية</div>
                 <ul className="major-list">
                   {major.core_subjects?.map((subject, idx) => (
                     <li key={idx}>{subject}</li>
                   ))}
                 </ul>
-                
+
                 <div className="major-section-title">المهارات المكتسبة</div>
                 <ul className="major-list">
                   {major.skills_acquired?.map((skill, idx) => (
                     <li key={idx}>{skill}</li>
                   ))}
                 </ul>
-                
+
                 <div className="major-section-title">الإيجابيات والسلبيات</div>
                 <p className="major-sub-title">الإيجابيات:</p>
                 <ul className="major-list">
@@ -76,10 +103,10 @@ function Majors() {
                     <li key={idx}>{con}</li>
                   ))}
                 </ul>
-                
+
                 <div className="major-section-title">مستقبل السوق</div>
                 <p className="major-text">{major.market_future}</p>
-                
+
                 <div className="major-section-title">أبرز الوظائف المتاحة</div>
                 <ul className="major-list no-margin">
                   {major.careers?.map((career, idx) => (

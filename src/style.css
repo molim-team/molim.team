@@ -1492,19 +1492,6 @@ footer p {
   margin-bottom: 0;
 }
 
-.faq-answer {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.4s ease;
-}
-
-.faq-answer > .answer-content {
-  overflow: hidden;
-}
-
-.faq-answer.open {
-  grid-template-rows: 1fr;
-}
 
 /* تنسيقات صفحة تفاصيل المنحة */
 .details-loading-container {

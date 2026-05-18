@@ -425,7 +425,7 @@ function Main() {
             bottom: 0,
             width: '100vw',
             height: '100vh',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backgroundColor: 'rgba(15, 23, 42, 0.5)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -434,7 +434,7 @@ function Main() {
           onClick={() => setShowAuthModal(false)}
         >
           <div 
-            className="relative w-full max-w-md bg-white dark:bg-[#132035] rounded-3xl p-8 text-right rtl shadow-2xl border border-gray-100 dark:border-slate-800 transform transition-all duration-300 scale-100"
+            className="relative w-full max-w-md bg-white dark:bg-[#0f172a] rounded-3xl p-8 text-right rtl shadow-2xl border border-gray-100 dark:border-slate-800 transform transition-all duration-300 scale-100"
             style={{
               position: 'relative',
               width: '90%',

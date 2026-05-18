@@ -26,6 +26,8 @@ const Scholarships = () => {
     return () => unsubscribe();
   }, []);
 
+  // ... (تحديث useEffect الجلب لضمان توافق النصوص)
+
   useEffect(() => {
     if (user) {
       const fetchFavorites = async () => {
@@ -34,20 +36,21 @@ const Scholarships = () => {
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const data = docSnap.data();
-            setFavorites(data.favorites || []);
+            // تحويل المعرفات لنصوص لضمان المطابقة بعد إعادة تسجيل الدخول
+            const favs = (data.favorites || []).map(f => String(f));
+            setFavorites(favs);
           } else {
-            setFavorites([]);
-          }
-        } catch (error) {
+      setFavorites([]);
+    }
+    } catch (error) {
           console.error("Error fetching favorites from Firestore:", error);
-        }
-      };
+    }
+  };
       fetchFavorites();
     } else {
       setFavorites([]);
     }
   }, [user]);
-
   useEffect(() => {
     fetch('/scholarships.json')
       .then(res => res.json())
@@ -82,6 +85,7 @@ const Scholarships = () => {
     try {
       const docRef = doc(db, 'users', user.uid);
       await setDoc(docRef, { favorites: newFavs }, { merge: true });
+      console.log("تم الحفظ في Firestore بنجاح");
     } catch (error) {
       console.error("Error saving favorites to Firestore:", error);
     }
@@ -431,6 +435,51 @@ const Scholarships = () => {
       )}
     </div>
   );
+};
+
+export default Scholarships;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const toggleFav = async (id) => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    const strId = String(id);
+    let newFavs;
+    if (favorites.includes(strId)) {
+      newFavs = favorites.filter(f => f !== strId);
+    } else {
+      newFavs = [...favorites, strId];
+    }
+    setFavorites(newFavs);
+
+    try {
+      const docRef = doc(db, 'users', user.uid);
+      await setDoc(docRef, { favorites: newFavs }, { merge: true });
+      console.log("تم الحفظ في Firestore بنجاح");
+    } catch (error) {
+      console.error("Error saving favorites to Firestore:", error);
+    }
 };
 
 export default Scholarships;

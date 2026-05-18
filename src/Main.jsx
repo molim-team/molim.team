@@ -30,14 +30,16 @@ function Main() {
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const data = docSnap.data();
-            setFavorites(data.favorites || []);
+            // تأكيد تحويل كل المعرفات إلى نصوص لضمان المطابقة
+            const favs = (data.favorites || []).map(f => String(f));
+            setFavorites(favs);
           } else {
-            setFavorites([]);
-          }
-        } catch (error) {
+      setFavorites([]);
+    }
+    } catch (error) {
           console.error("Error fetching favorites from Firestore:", error);
-        }
-      };
+    }
+  };
       fetchFavorites();
     } else {
       setFavorites([]);
@@ -99,7 +101,6 @@ function Main() {
   }, [scholarships, loading]);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-
   const getCountdown = (deadline) => {
     if (!deadline) return null;
     const today = new Date();
@@ -112,7 +113,7 @@ function Main() {
     return { text: `📅 باقي ${diff} يوم على إغلاق التقديم`, urgent: false };
   };
 
-  const handleFavorite = async (e, id) => {
+  const toggleFav = async (e, id) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -128,13 +129,17 @@ function Main() {
     } else {
       newFavs = [...favorites, strId];
     }
+
+    // تحديث الحالة محلياً فوراً (Optimistic UI)
     setFavorites(newFavs);
 
     try {
       const docRef = doc(db, 'users', user.uid);
       await setDoc(docRef, { favorites: newFavs }, { merge: true });
+      console.log("تم تحديث المفضلة بنجاح");
     } catch (error) {
-      console.error("Error saving favorites to Firestore:", error);
+      console.error("خطأ في حفظ المفضلة:", error);
+      // في حال الخطأ، يمكن إعادة الحالة القديمة هنا إذا لزم الأمر
     }
   };
 
@@ -343,7 +348,7 @@ function Main() {
                   <div key={s.id} className="card">
                     <button 
                       className={`fav-btn ${active ? 'active' : ''}`} 
-                      onClick={(e) => handleFavorite(e, s.id)}
+                      onClick={(e) => toggleFav(e, s.id)}
                       aria-label={active ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
                     >
                       <i className={`${active ? 'fa-solid' : 'fa-regular'} fa-heart`}></i>

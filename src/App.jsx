@@ -6,7 +6,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from './firebase-config';
 
 // استيراد الصفحات والمكونات بمطابقة تامة لأسماء ملفاتك في المجلد
-import Main from './main'; 
+import Main from './Main'; 
 import Scholarships from './Scholarships'; 
 import ScholarshipDetails from './Scholarship'; 
 import FAQ from './Faq';

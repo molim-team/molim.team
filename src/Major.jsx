@@ -1,36 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import majorsDataRaw from './majors_info.json'; 
 
 function Majors() {
-  const [majorsData, setMajorsData] = useState([]);
+  const [majorsData] = useState(Object.entries(majorsDataRaw).map(([key, value]) => ({
+    id: key,
+    ...value
+  })));
+
   const [openKey, setOpenKey] = useState(null);
-  const [loading, setLoading] = useState(true);
   const location = useLocation();
 
+ 
   useEffect(() => {
-    const fetchMajors = async () => {
-      try {
-        const response = await fetch('/majors_info.json');
-        const data = await response.json();
-        
-        const majorsArray = Object.entries(data).map(([key, value]) => ({
-          id: key,
-          ...value
-        }));
-        
-        setMajorsData(majorsArray);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error loading majors:", error);
-        setLoading(false);
-      }
-    };
-
-    fetchMajors();
-  }, []);
-
-  useEffect(() => {
-    if (!loading && location.hash) {
+    if (location.hash) {
       const targetKey = decodeURIComponent(location.hash.substring(1));
       setOpenKey(targetKey);
       setTimeout(() => {
@@ -40,19 +23,11 @@ function Majors() {
         }
       }, 300);
     }
-  }, [location.hash, loading]);
+  }, [location.hash]);
 
   const toggleFaq = (key) => {
     setOpenKey(openKey === key ? null : key);
   };
-
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <p>جاري تحميل دليل التخصصات...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="majors-page">
@@ -69,8 +44,8 @@ function Majors() {
               <span className="faq-icon">{openKey === major.id ? '−' : '+'}</span>
             </div>
             
-            <div className={`faq-answer ${openKey === major.id ? 'open' : ''}`}>
-              <div className="answer-content">
+            <div className={`faq-answer ${openKey === major.id ? 'open h-auto max-h-none overflow-visible' : ''}`}>
+              <div className="answer-content h-auto overflow-visible">
                 <div className="major-section-title">نظرة عامة</div>
                 <p className="major-text">{major.overview}</p>
                 

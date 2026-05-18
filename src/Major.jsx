@@ -44,7 +44,7 @@ function Majors() {
               <span className="faq-icon">{openKey === major.id ? '−' : '+'}</span>
             </div>
             
-            <div className={`faq-answer ${openKey === major.id ? 'open h-auto max-h-none overflow-visible' : ''}`}>
+            <div className={`faq-answer ${openKey === major.id ? 'open' : ''}`}>
               <div className="answer-content h-auto overflow-visible">
                 <div className="major-section-title">نظرة عامة</div>
                 <p className="major-text">{major.overview}</p>

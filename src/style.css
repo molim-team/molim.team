@@ -1492,20 +1492,18 @@ footer p {
   margin-bottom: 0;
 }
 
-/* حركة الأكورديون السلسة */
 .faq-answer {
-  max-height: 0;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.4s ease;
+}
+
+.faq-answer > .answer-content {
   overflow: hidden;
-  transition: max-height 0.4s ease-out;
 }
 
 .faq-answer.open {
-  max-height: 5000x; /* يعطي مساحة كافية للنصوص الطويلة ليظهر بمرونة */
-  transition: max-height 1.5s ease-in;
-}
-
-.answer-content {
-  padding: 15px;
+  grid-template-rows: 1fr;
 }
 
 /* تنسيقات صفحة تفاصيل المنحة */

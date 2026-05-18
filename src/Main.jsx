@@ -205,19 +205,45 @@ function Main() {
           }
         }
 
-        /* Available Scholarships stack vertically on mobile and horizontally on desktop */
+        /* Available Scholarships horizontal scroll on all views */
+        #open-scholarships-grid {
+          display: flex !important;
+          flex-direction: row !important;
+          flex-wrap: nowrap !important;
+          overflow-x: auto !important;
+          -webkit-overflow-scrolling: touch;
+          scroll-behavior: smooth;
+        }
+
+        #open-scholarships-grid::-webkit-scrollbar {
+          height: 6px;
+        }
+        #open-scholarships-grid::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.05);
+          border-radius: 10px;
+        }
+        #open-scholarships-grid::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 10px;
+        }
+
+        #open-scholarships-grid .card,
+        #open-scholarships-grid .skeleton-card {
+          flex-shrink: 0 !important;
+        }
+
         @media (max-width: 767px) {
-          #open-scholarships-grid.flex-col {
-            flex-direction: column !important;
-            overflow-x: visible !important;
-            padding: 0 0 20px 0 !important;
-            gap: 20px !important;
+          #open-scholarships-grid {
+            gap: 16px !important;
+            padding: 0 16px 20px 16px !important;
+            margin-left: -16px !important;
+            margin-right: -16px !important;
           }
-          #open-scholarships-grid.flex-col .card,
-          #open-scholarships-grid.flex-col .skeleton-card {
-            min-width: 100% !important;
-            max-width: 100% !important;
-            width: 100% !important;
+          #open-scholarships-grid .card,
+          #open-scholarships-grid .skeleton-card {
+            width: 80% !important;
+            min-width: 270px !important;
+            max-width: 320px !important;
           }
           /* Hide slider buttons on mobile */
           .slider-wrapper .slider-btn {
@@ -226,9 +252,8 @@ function Main() {
         }
 
         @media (min-width: 768px) {
-          #open-scholarships-grid.md\\:flex-row {
-            flex-direction: row !important;
-            overflow-x: auto !important;
+          #open-scholarships-grid {
+            gap: 20px !important;
           }
         }
 
@@ -290,7 +315,7 @@ function Main() {
           <button className="slider-btn prev" onClick={() => slideCards(-1)}>&#8250;</button>
           <div 
             id="open-scholarships-grid" 
-            className="cards-grid flex-col md:flex-row"
+            className="cards-grid flex flex-row overflow-x-auto flex-nowrap"
             ref={gridRef}
             onMouseDown={handleMouseDown}
             onMouseLeave={handleMouseLeave}

@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { onAuthStateChanged } from "firebase/auth";
 
-// حل مشكلة الفايربيس: استيراد مباشر وصحيح من نفس المجلد الحاضن
 import { auth } from './firebase-config';
+import { FavoritesProvider } from './FavoritesContext';
 
-// استيراد الصفحات والمكونات بمطابقة تامة لأسماء ملفاتك في المجلد
 import Main from './Main'; 
 import Scholarships from './Scholarships'; 
 import ScholarshipDetails from './Scholarship'; 
@@ -19,7 +18,6 @@ import Quiz from './Quiz';
 import Admin from './Admin';
 import Major from './Major';
 
-// استيراد بوت لمام
 import LlamamBot from './LlamamBot';
 
 import './style.css';
@@ -115,14 +113,12 @@ function Footer() {
   return (
     <footer>
       <div className="footer-content">
-
         <div className="footer-brand">
           <img src="/images/logo.png" alt="مُلم" className="footer-logo"/>
           <p>منصتك الأولى لاكتشاف المنح الدراسية حول العالم</p>
         </div>
 
-        
-       <div className="footer-links">
+        <div className="footer-links">
           <h4>روابط سريعة</h4>
           <Link to="/">الرئيسية</Link>
           <Link to="/scholarships">جميع المنح</Link>
@@ -136,8 +132,6 @@ function Footer() {
           <Link to="/@molim_ContactBot">الدعم الفني - تليجرام</Link>
           <a href="mailto:molim.team@gmail.com">molim.team@gmail.com</a>
         </div>
-
-
       </div>
 
       <div className="footer-bottom">
@@ -149,38 +143,32 @@ function Footer() {
 
 function App() {
   return (
-    <Router>
-      <Header />
-      
-      <main className="main-content-wrapper">
-        <Routes>
-          {/* الواجهة الرئيسية الترحيبية من ملف Main.jsx */}
-          <Route path="/" element={<Main />} /> 
-          
-          {/* صفحة عرض كل المنح المتاحة */}
-          <Route path="/scholarships" element={<Scholarships />} />
-          
-          {/* صفحة تفاصيل المنحة الواحدة بناءً على الـ ID */}
-          <Route path="/scholarship/:id" element={<ScholarshipDetails />} />
-          
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/quiz" element={<Quiz />} />
-          <Route path="/admin" element={<Admin />} />
-          
-          <Route path="/major" element={<Major />} />
-          <Route path="/major/:id" element={<Major />} />
-        </Routes>
-      </main>
-      
-      <LlamamBot />
-
-      <Footer />
-    </Router>
+    <FavoritesProvider>
+      <Router>
+        <Header />
+        
+        <main className="main-content-wrapper">
+          <Routes>
+            <Route path="/" element={<Main />} /> 
+            <Route path="/scholarships" element={<Scholarships />} />
+            <Route path="/scholarship/:id" element={<ScholarshipDetails />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/quiz" element={<Quiz />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/major" element={<Major />} />
+            <Route path="/major/:id" element={<Major />} />
+          </Routes>
+        </main>
+        
+        <LlamamBot />
+        <Footer />
+      </Router>
+    </FavoritesProvider>
   );
 }
 

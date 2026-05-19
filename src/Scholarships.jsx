@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from './firebase-config';
+import { useFavorites } from './FavoritesContext';
 
 const Scholarships = () => {
   const navigate = useNavigate();
@@ -11,47 +9,10 @@ const Scholarships = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [degreeFilter, setDegreeFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('all');
-
-  const [favorites, setFavorites] = useState([]);
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true); // ← جديد
   const [showAuthModal, setShowAuthModal] = useState(false);
-
-  const [headerScrolled, setHeaderScrolled] = useState(false);
   const [showTopBtn, setShowTopBtn] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false); // ← Firebase جاوب
-    });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (authLoading) return; // ← انتظر Firebase قبل أي شي
-
-    if (user) {
-      const fetchFavorites = async () => {
-        try {
-          const docRef = doc(db, 'users', user.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            const favs = (data.favorites || []).map(f => String(f));
-            setFavorites(favs);
-          } else {
-            setFavorites([]);
-          }
-        } catch (error) {
-          console.error("Error fetching favorites from Firestore:", error);
-        }
-      };
-      fetchFavorites();
-    } else {
-      setFavorites([]);
-    }
-  }, [user, authLoading]); // ← أضف authLoading للـ dependency
+  const { favorites, toggleFav: favToggle, user } = useFavorites();
 
   useEffect(() => {
     fetch('/scholarships.json')
@@ -62,7 +23,6 @@ const Scholarships = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setHeaderScrolled(window.scrollY > 50);
       setShowTopBtn(window.scrollY > 300);
     };
     window.addEventListener('scroll', handleScroll);
@@ -70,26 +30,9 @@ const Scholarships = () => {
   }, []);
 
   const toggleFav = async (id) => {
-    if (!user) {
+    const success = await favToggle(id);
+    if (!success) {
       setShowAuthModal(true);
-      return;
-    }
-
-    const strId = String(id);
-    let newFavs;
-    if (favorites.includes(strId)) {
-      newFavs = favorites.filter(f => f !== strId);
-    } else {
-      newFavs = [...favorites, strId];
-    }
-    setFavorites(newFavs);
-
-    try {
-      const docRef = doc(db, 'users', user.uid);
-      await setDoc(docRef, { favorites: newFavs }, { merge: true });
-      console.log("تم الحفظ في Firestore بنجاح");
-    } catch (error) {
-      console.error("Error saving favorites to Firestore:", error);
     }
   };
 
@@ -137,12 +80,10 @@ const Scholarships = () => {
     };
   }, [filteredScholarships, favoriteScholarships, activeTab]);
 
-  // مكون الكارد لتجنب التكرار
   const ScholarshipCard = ({ s }) => (
-    <div key={s.id} className="card">
+    <div className="card">
       <button
         className={`fav-btn ${favorites.includes(String(s.id)) ? 'active' : ''}`}
-        data-id={s.id}
         aria-label={favorites.includes(String(s.id)) ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
         onClick={(e) => {
           e.stopPropagation();

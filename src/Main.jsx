@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from './firebase-config';
+import { useFavorites } from './FavoritesContext';
 
 function Main() {
   const navigate = useNavigate();
@@ -11,43 +9,9 @@ function Main() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [favorites, setFavorites] = useState([]);
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true); // ← جديد
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false); // ← Firebase جاوب
-    });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (authLoading) return; // ← انتظر Firebase قبل أي شي
-
-    if (user) {
-      const fetchFavorites = async () => {
-        try {
-          const docRef = doc(db, 'users', user.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            const favs = (data.favorites || []).map(f => String(f));
-            setFavorites(favs);
-          } else {
-            setFavorites([]);
-          }
-        } catch (error) {
-          console.error("Error fetching favorites from Firestore:", error);
-        }
-      };
-      fetchFavorites();
-    } else {
-      setFavorites([]);
-    }
-  }, [user, authLoading]); // ← أضف authLoading للـ dependency
+  const { favorites, toggleFav: favToggle, user } = useFavorites();
 
   const gridRef = useRef(null);
   const [isDown, setIsDown] = useState(false);
@@ -120,27 +84,9 @@ function Main() {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!user) {
+    const success = await favToggle(id);
+    if (!success) {
       setShowAuthModal(true);
-      return;
-    }
-
-    const strId = String(id);
-    let newFavs;
-    if (favorites.includes(strId)) {
-      newFavs = favorites.filter(favId => favId !== strId);
-    } else {
-      newFavs = [...favorites, strId];
-    }
-
-    setFavorites(newFavs);
-
-    try {
-      const docRef = doc(db, 'users', user.uid);
-      await setDoc(docRef, { favorites: newFavs }, { merge: true });
-      console.log("تم تحديث المفضلة بنجاح");
-    } catch (error) {
-      console.error("خطأ في حفظ المفضلة:", error);
     }
   };
 

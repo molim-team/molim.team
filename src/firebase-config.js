@@ -1,9 +1,8 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, browserLocalPersistence, setPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
-// إعدادات منصة مُلم الخاصة بك باستخدام متغيرات البيئة لـ Vite
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -14,10 +13,8 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// تهيئة فيربيز
 const app = initializeApp(firebaseConfig);
 
-// تفعيل وتأمين طبقة الحماية App Check باستخدام ReCaptcha لمنع البوتات
 if (typeof window !== "undefined") {
   const siteKey = import.meta.env.VITE_FIREBASE_APP_CHECK_SITE_KEY;
   if (siteKey) {
@@ -28,6 +25,10 @@ if (typeof window !== "undefined") {
   }
 }
 
-// تصدير الصلاحيات وقاعدة البيانات للاستخدام في بقية صفحات الموقع
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Firebase يحفظ جلسة المستخدم في المتصفح بشكل دائم
+setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.error("خطأ في ضبط الـ persistence:", error);
+});

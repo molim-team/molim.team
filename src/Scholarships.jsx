@@ -5,6 +5,7 @@ import { useFavorites } from './FavoritesContext';
 const Scholarships = () => {
   const navigate = useNavigate();
   const [scholarships, setScholarships] = useState([]);
+  const [loadingScholarships, setLoadingScholarships] = useState(true); // ← جديد
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [degreeFilter, setDegreeFilter] = useState('all');
@@ -17,8 +18,14 @@ const Scholarships = () => {
   useEffect(() => {
     fetch('/scholarships.json')
       .then(res => res.json())
-      .then(data => setScholarships(data))
-      .catch(err => console.error('خطأ:', err));
+      .then(data => {
+        setScholarships(data);
+        setLoadingScholarships(false); // ← انتهى التحميل
+      })
+      .catch(err => {
+        console.error('خطأ:', err);
+        setLoadingScholarships(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -50,7 +57,7 @@ const Scholarships = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  let filteredScholarships = scholarships.filter(s => {
+  const filteredScholarships = loadingScholarships ? [] : scholarships.filter(s => {
     const searchLower = search.toLowerCase();
     const matchSearch = s.name.toLowerCase().includes(searchLower) || s.country.toLowerCase().includes(searchLower);
     const isOpen = s.open === true || s.open === 'true';
@@ -58,10 +65,6 @@ const Scholarships = () => {
     const matchDegree = degreeFilter === 'all' || s.degree.includes(degreeFilter);
     return matchSearch && matchStatus && matchDegree;
   });
-
-  if (filteredScholarships.length === 0 && scholarships.length > 0) {
-    filteredScholarships = scholarships.slice(0, 4);
-  }
 
   const favoriteScholarships = scholarships.filter(s => favorites.includes(String(s.id)));
 
@@ -161,11 +164,25 @@ const Scholarships = () => {
 
             <section className="featured">
               <div className="grid">
-                {filteredScholarships.map(s => (
-                  <ScholarshipCard key={s.id} s={s} />
-                ))}
+                {loadingScholarships ? (
+                  // skeleton loading بدل رسالة "لا توجد منح"
+                  Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="skeleton-card">
+                      <div className="skeleton-line skeleton-flag"></div>
+                      <div className="skeleton-line skeleton-title"></div>
+                      <div className="skeleton-line skeleton-text"></div>
+                      <div className="skeleton-line skeleton-text wide"></div>
+                      <div className="skeleton-line skeleton-btn"></div>
+                      <div className="skeleton-line skeleton-btn"></div>
+                    </div>
+                  ))
+                ) : (
+                  filteredScholarships.map(s => (
+                    <ScholarshipCard key={s.id} s={s} />
+                  ))
+                )}
               </div>
-              {filteredScholarships.length === 0 && (
+              {!loadingScholarships && filteredScholarships.length === 0 && (
                 <p id="no-results">لا توجد منح تطابق بحثك 😔</p>
               )}
             </section>

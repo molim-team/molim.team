@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import majorsDataRaw from './majors_info.json';
 
@@ -9,7 +9,6 @@ function Majors() {
   })));
 
   const [openKey, setOpenKey] = useState(null);
-  const contentRefs = useRef({});
   const location = useLocation();
 
   // التعامل مع الروابط المباشرة (Deep Linking) عند وجود hash في الرابط
@@ -26,9 +25,9 @@ function Majors() {
     }
   }, [location.hash]);
 
- const toggleFaq = (key) => {
-  setOpenKey(openKey === key ? null : key);
-};
+  const toggleFaq = (key) => {
+    setOpenKey(openKey === key ? null : key);
+  };
 
   return (
     <div className="majors-page">
@@ -47,18 +46,8 @@ function Majors() {
               <span>{major.name}</span>
               <span className="faq-icon">{openKey === major.id ? '−' : '+'}</span>
             </div>
-            <div
-              className="faq-collapse-wrapper"
-              style={{
-                height: openKey === major.id
-                  ? `${contentRefs.current[major.id]?.scrollHeight}px`
-                  : '0px'
-              }}
-            >
-              <div
-                className="answer-content"
-                ref={el => contentRefs.current[major.id] = el}
-              >
+            <div className={`faq-collapse-wrapper ${openKey === major.id ? 'is-open' : ''}`}>
+              <div className="answer-content">
                 <div className="major-section-title">نظرة عامة</div>
                 <p className="major-text">{major.overview}</p>
 
@@ -80,20 +69,20 @@ function Majors() {
                 <div className="pros-cons-grid">
                   <div>
                     <p className="major-sub-title pros">✅ الإيجابيات:</p>
-                <ul className="major-list">
+                    <ul className="major-list">
                       {major.pros?.map((pro, idx) => (
                         <li key={idx}>{pro}</li>
-                  ))}
-                </ul>
-              </div>
+                      ))}
+                    </ul>
+                  </div>
                   <div>
                     <p className="major-sub-title cons">❌ السلبيات:</p>
                     <ul className="major-list">
                       {major.cons?.map((con, idx) => (
                         <li key={idx}>{con}</li>
-        ))}
+                      ))}
                     </ul>
-    </div>
+                  </div>
                 </div>
 
                 <div className="major-section-title">مستقبل السوق</div>

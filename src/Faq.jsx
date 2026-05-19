@@ -5,11 +5,7 @@ function Faq() {
   const [openIndex, setOpenIndex] = useState(null);
 
   const toggleFaq = (index) => {
-    if (openIndex === index) {
-      setOpenIndex(null); // إغلاق إذا كان مفتوحاً بالفعل
-    } else {
-      setOpenIndex(index); // فتح السؤال المحدد
-    }
+    setOpenIndex(openIndex === index ? null : index);
   };
 
   const faqData = [
@@ -85,29 +81,25 @@ function Faq() {
 
   return (
     <div className="faq-page">
-      {/* عنوان */}
       <section className="page-hero">
         <h1>❓ الأسئلة الشائعة</h1>
         <p>إجابات على أكثر الأسئلة التي يطرحها الطلاب</p>
       </section>
 
-      {/* الأسئلة */}
       <section className="faq-section">
         {faqData.map((item, index) => (
           <div className="faq-item" key={index}>
-            <div className="faq-question" onClick={() => toggleFaq(index)}>
+            <div
+              className={`faq-question ${openIndex === index ? 'active' : ''}`}
+              onClick={() => toggleFaq(index)}
+            >
               <span>{item.q}</span>
               <span className="faq-icon">{openIndex === index ? '−' : '+'}</span>
             </div>
-            <div 
-              className="faq-answer" 
-              style={{ 
-                maxHeight: openIndex === index ? '500px' : '0px',
-                overflow: 'hidden',
-                transition: 'max-height 0.3s ease'
-              }}
-            >
-              <p style={{ padding: '15px' }}>{item.a}</p>
+            <div className={`faq-collapse-wrapper ${openIndex === index ? 'is-open' : ''}`}>
+              <div className="answer-content">
+                <p style={{ padding: '15px' }}>{item.a}</p>
+              </div>
             </div>
           </div>
         ))}

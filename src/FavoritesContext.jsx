@@ -8,7 +8,6 @@ const FavoritesContext = createContext();
 export function FavoritesProvider({ children }) {
   const [favorites, setFavorites] = useState([]);
   const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true); // ✅ التعديل الأول
 
   // مراقبة الجلسة وجلب البيانات بهدوء في الخلفية بدون ما نوقف الموقع
   useEffect(() => {
@@ -34,8 +33,6 @@ export function FavoritesProvider({ children }) {
       } else {
         setFavorites([]);
       }
-
-      setAuthLoading(false); // ✅ التعديل الثاني: بعد انتهاء كل العمليات
     });
 
     return () => unsubscribe();
@@ -51,7 +48,7 @@ export function FavoritesProvider({ children }) {
     // التحديث محلياً فوراً عشان يتجاوب الزر بلمح البصر
     setFavorites((currentFavs) => {
       const isExist = currentFavs.includes(stringId);
-      updatedFavs = isExist
+      updatedFavs = isExist 
         ? currentFavs.filter(id => id !== stringId)
         : [...currentFavs, stringId];
       return updatedFavs;
@@ -69,8 +66,7 @@ export function FavoritesProvider({ children }) {
   };
 
   return (
-    // ✅ التعديل الثالث: إضافة authLoading للـ value
-    <FavoritesContext.Provider value={{ favorites, toggleFav, user, authLoading }}>
+    <FavoritesContext.Provider value={{ favorites, toggleFav, user }}>
       {children}
     </FavoritesContext.Provider>
   );

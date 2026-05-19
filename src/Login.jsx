@@ -94,7 +94,7 @@ function Login() {
             <label>البريد الإلكتروني</label>
             <input 
               type="email" 
-              placeholder="example@email.com" 
+              placeholder="amr@email.com" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />

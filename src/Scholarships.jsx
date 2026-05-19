@@ -10,10 +10,11 @@ const Scholarships = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [degreeFilter, setDegreeFilter] = useState('all');
-  const [activeTab, setActiveTab] = useState('all'); // 'all' or 'favorites'
+  const [activeTab, setActiveTab] = useState('all');
 
   const [favorites, setFavorites] = useState([]);
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true); // ← جديد
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const [headerScrolled, setHeaderScrolled] = useState(false);
@@ -22,13 +23,14 @@ const Scholarships = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      setAuthLoading(false); // ← Firebase جاوب
     });
     return () => unsubscribe();
   }, []);
 
-  // ... (تحديث useEffect الجلب لضمان توافق النصوص)
-
   useEffect(() => {
+    if (authLoading) return; // ← انتظر Firebase قبل أي شي
+
     if (user) {
       const fetchFavorites = async () => {
         try {
@@ -36,21 +38,21 @@ const Scholarships = () => {
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const data = docSnap.data();
-            // تحويل المعرفات لنصوص لضمان المطابقة بعد إعادة تسجيل الدخول
             const favs = (data.favorites || []).map(f => String(f));
             setFavorites(favs);
           } else {
-      setFavorites([]);
-    }
-    } catch (error) {
+            setFavorites([]);
+          }
+        } catch (error) {
           console.error("Error fetching favorites from Firestore:", error);
-    }
-  };
+        }
+      };
       fetchFavorites();
     } else {
       setFavorites([]);
     }
-  }, [user]);
+  }, [user, authLoading]); // ← أضف authLoading للـ dependency
+
   useEffect(() => {
     fetch('/scholarships.json')
       .then(res => res.json())
@@ -135,6 +137,42 @@ const Scholarships = () => {
     };
   }, [filteredScholarships, favoriteScholarships, activeTab]);
 
+  // مكون الكارد لتجنب التكرار
+  const ScholarshipCard = ({ s }) => (
+    <div key={s.id} className="card">
+      <button
+        className={`fav-btn ${favorites.includes(String(s.id)) ? 'active' : ''}`}
+        data-id={s.id}
+        aria-label={favorites.includes(String(s.id)) ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
+        onClick={(e) => {
+          e.stopPropagation();
+          toggleFav(s.id);
+        }}
+      >
+        <i className={`${favorites.includes(String(s.id)) ? 'fa-solid' : 'fa-regular'} fa-heart`}></i>
+      </button>
+      {s.flag && (s.flag.startsWith('http') || s.flag.includes('/') || s.flag.includes('.')) ? (
+        <img className="card-flag" src={s.flag} alt="flag" />
+      ) : (
+        <span className="card-flag">{s.flag || ''}</span>
+      )}
+      <h3>{s.name}</h3>
+      <p className="country">📍 {s.country}</p>
+      <p className="degree">🎓 {s.degree}</p>
+      <span className={`status ${(s.open === true || s.open === 'true') ? 'open' : 'closed'}`}>
+        {(s.open === true || s.open === 'true') ? '✅ التقديم مفتوح' : '🔴 التقديم مغلق'}
+      </span>
+      <p className="desc">{s.description || ''}</p>
+      {s.open_date && <p className="deadline">📅 موعد فتح التقديم: {s.open_date}</p>}
+      <p className="deadline">📅 آخر موعد للتقديم: {s.deadline}</p>
+      <Link to={`/scholarship/${s.id}`} className="btn-details">تفاصيل المنحة كاملة ←</Link>
+      <a href={s.link} target="_blank" rel="noreferrer">زيارة الموقع الرسمي ↗</a>
+      <a className="btn-details" onClick={() => shareScholarship(s.id, s.name, s.country)}>
+        📤 شارك المنحة
+      </a>
+    </div>
+  );
+
   return (
     <div className="flex flex-col min-h-screen justify-between">
       <div>
@@ -143,139 +181,72 @@ const Scholarships = () => {
           <p>اكتشف المنح المتاحة وتفاصيلها كاملة</p>
         </section>
 
-      <div className="tabs">
-        <button
-          className={`tab-btn ${activeTab === 'all' ? 'tab-active' : ''}`}
-          id="tab-all"
-          onClick={() => setActiveTab('all')}
-        >
-          📋 جميع المنح
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'favorites' ? 'tab-active' : ''}`}
-          id="tab-fav"
-          onClick={() => setActiveTab('favorites')}
-        >
-          ❤️ المفضلة
-        </button>
-      </div>
-
-      {activeTab === 'all' && (
-        <div id="all-section">
-          <section className="filters">
-            <input
-              type="text"
-              id="search"
-              placeholder="🔍 ابحث عن منحة..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <select id="filter-status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-              <option value="all">جميع المنح</option>
-              <option value="open">التقديم مفتوح</option>
-              <option value="closed">التقديم مغلق</option>
-            </select>
-            <select id="filter-degree" value={degreeFilter} onChange={(e) => setDegreeFilter(e.target.value)}>
-              <option value="all">جميع المراحل</option>
-              <option value="بكالوريوس">بكالوريوس</option>
-              <option value="ماجستير">ماجستير</option>
-              <option value="دكتوراه">دكتوراه</option>
-            </select>
-          </section>
-
-          <section className="featured">
-            <div id="scholarships-grid" className="grid">
-              {filteredScholarships.map(s => (
-                <div key={s.id} className="card">
-                  <button
-                    className={`fav-btn ${favorites.includes(String(s.id)) ? 'active' : ''}`}
-                    data-id={s.id}
-                    aria-label={favorites.includes(String(s.id)) ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFav(s.id);
-                    }}
-                  >
-                    <i className={`${favorites.includes(String(s.id)) ? 'fa-solid' : 'fa-regular'} fa-heart`}></i>
-                  </button>
-                  {s.flag && (s.flag.startsWith('http') || s.flag.includes('/') || s.flag.includes('.')) ? (
-                    <img className="card-flag" src={s.flag} alt="flag" />
-                  ) : (
-                    <span className="card-flag">{s.flag || ''}</span>
-                  )}
-                  <h3>{s.name}</h3>
-                  <p className="country">📍 {s.country}</p>
-                  <p className="degree">🎓 {s.degree}</p>
-                  <span className={`status ${(s.open === true || s.open === 'true') ? 'open' : 'closed'}`}>
-                    {(s.open === true || s.open === 'true') ? '✅ التقديم مفتوح' : '🔴 التقديم مغلق'}
-                  </span>
-                  <p className="desc">{s.description || ''}</p>
-                  {s.open_date && <p className="deadline">📅 موعد فتح التقديم: {s.open_date}</p>}
-                  <p className="deadline">📅 آخر موعد للتقديم: {s.deadline}</p>
-                  <Link to={`/scholarship/${s.id}`} className="btn-details">تفاصيل المنحة كاملة ←</Link>
-                  <a href={s.link} target="_blank" rel="noreferrer">زيارة الموقع الرسمي ↗</a>
-                  <a className="btn-details" onClick={() => shareScholarship(s.id, s.name, s.country)}>
-                    📤 شارك المنحة
-                  </a>
-                </div>
-              ))}
-            </div>
-            {filteredScholarships.length === 0 && (
-              <p id="no-results">
-                لا توجد منح تطابق بحثك 😔
-              </p>
-            )}
-          </section>
+        <div className="tabs">
+          <button
+            className={`tab-btn ${activeTab === 'all' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('all')}
+          >
+            📋 جميع المنح
+          </button>
+          <button
+            className={`tab-btn ${activeTab === 'favorites' ? 'tab-active' : ''}`}
+            onClick={() => setActiveTab('favorites')}
+          >
+            ❤️ المفضلة
+          </button>
         </div>
-      )}
 
-      {activeTab === 'favorites' && (
-        <div id="favorites-section">
-          <section className="featured">
-            <div id="favorites-grid" className="grid">
-              {favoriteScholarships.map(s => (
-                <div key={s.id} className="card">
-                  <button
-                    className={`fav-btn ${favorites.includes(String(s.id)) ? 'active' : ''}`}
-                    data-id={s.id}
-                    aria-label={favorites.includes(String(s.id)) ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFav(s.id);
-                    }}
-                  >
-                    <i className={`${favorites.includes(String(s.id)) ? 'fa-solid' : 'fa-regular'} fa-heart`}></i>
-                  </button>
-                  {s.flag && (s.flag.startsWith('http') || s.flag.includes('/') || s.flag.includes('.')) ? (
-                    <img className="card-flag" src={s.flag} alt="flag" />
-                  ) : (
-                    <span className="card-flag">{s.flag || ''}</span>
-                  )}
-                  <h3>{s.name}</h3>
-                  <p className="country">📍 {s.country}</p>
-                  <p className="degree">🎓 {s.degree}</p>
-                  <span className={`status ${(s.open === true || s.open === 'true') ? 'open' : 'closed'}`}>
-                    {(s.open === true || s.open === 'true') ? '✅ التقديم مفتوح' : '🔴 التقديم مغلق'}
-                  </span>
-                  <p className="desc">{s.description || ''}</p>
-                  {s.open_date && <p className="deadline">📅 موعد فتح التقديم: {s.open_date}</p>}
-                  <p className="deadline">📅 آخر موعد للتقديم: {s.deadline}</p>
-                  <Link to={`/scholarship/${s.id}`} className="btn-details">تفاصيل المنحة كاملة ←</Link>
-                  <a href={s.link} target="_blank" rel="noreferrer">زيارة الموقع الرسمي ↗</a>
-                  <a className="btn-details" onClick={() => shareScholarship(s.id, s.name, s.country)}>
-                    📤 شارك المنحة
-                  </a>
-                </div>
-              ))}
-            </div>
-            {favoriteScholarships.length === 0 && (
-              <p id="no-favorites">
-                لم تضف أي منحة للمفضلة بعد 💔<br />اضغط على القلب في أي منحة لحفظها هنا!
-              </p>
-            )}
-          </section>
-        </div>
-      )}
+        {activeTab === 'all' && (
+          <div id="all-section">
+            <section className="filters">
+              <input
+                type="text"
+                placeholder="🔍 ابحث عن منحة..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                <option value="all">جميع المنح</option>
+                <option value="open">التقديم مفتوح</option>
+                <option value="closed">التقديم مغلق</option>
+              </select>
+              <select value={degreeFilter} onChange={(e) => setDegreeFilter(e.target.value)}>
+                <option value="all">جميع المراحل</option>
+                <option value="بكالوريوس">بكالوريوس</option>
+                <option value="ماجستير">ماجستير</option>
+                <option value="دكتوراه">دكتوراه</option>
+              </select>
+            </section>
+
+            <section className="featured">
+              <div className="grid">
+                {filteredScholarships.map(s => (
+                  <ScholarshipCard key={s.id} s={s} />
+                ))}
+              </div>
+              {filteredScholarships.length === 0 && (
+                <p id="no-results">لا توجد منح تطابق بحثك 😔</p>
+              )}
+            </section>
+          </div>
+        )}
+
+        {activeTab === 'favorites' && (
+          <div id="favorites-section">
+            <section className="featured">
+              <div className="grid">
+                {favoriteScholarships.map(s => (
+                  <ScholarshipCard key={s.id} s={s} />
+                ))}
+              </div>
+              {favoriteScholarships.length === 0 && (
+                <p id="no-favorites">
+                  لم تضف أي منحة للمفضلة بعد 💔<br />اضغط على القلب في أي منحة لحفظها هنا!
+                </p>
+              )}
+            </section>
+          </div>
+        )}
       </div>
 
       {showTopBtn && (
@@ -283,8 +254,7 @@ const Scholarships = () => {
       )}
 
       {showAuthModal && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-all duration-300"
+        <div
           style={{
             position: 'fixed',
             top: 0,
@@ -301,8 +271,7 @@ const Scholarships = () => {
           }}
           onClick={() => setShowAuthModal(false)}
         >
-          <div 
-            className="relative w-full max-w-md bg-white dark:bg-[#0f172a] rounded-3xl p-8 text-right rtl shadow-2xl border border-gray-100 dark:border-slate-800 transform transition-all duration-300 scale-100"
+          <div
             style={{
               position: 'relative',
               width: '90%',
@@ -317,9 +286,7 @@ const Scholarships = () => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
-            <button 
-              className="absolute top-5 left-5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 text-2xl font-bold transition-colors cursor-pointer bg-transparent border-none"
+            <button
               onClick={() => setShowAuthModal(false)}
               style={{
                 position: 'absolute',
@@ -335,66 +302,45 @@ const Scholarships = () => {
               ✕
             </button>
 
-            {/* Red Heart Icon */}
-            <div 
-              className="w-20 h-20 mx-auto mb-6 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center text-red-500 text-4xl shadow-inner"
-              style={{
-                width: '80px',
-                height: '80px',
-                margin: '0 auto 24px',
-                backgroundColor: 'rgba(255, 69, 0, 0.08)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#ff4500',
-                fontSize: '36px',
-              }}
-            >
-              <i className="fa-solid fa-heart animate-pulse"></i>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              margin: '0 auto 24px',
+              backgroundColor: 'rgba(255, 69, 0, 0.08)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#ff4500',
+              fontSize: '36px',
+            }}>
+              <i className="fa-solid fa-heart"></i>
             </div>
 
-            {/* Title */}
-            <h3 
-              className="text-2xl font-black text-center text-gray-900 dark:text-white mb-3"
-              style={{
-                fontSize: '22px',
-                fontWeight: '900',
-                color: 'var(--primary-color, #ff4500)',
-                marginBottom: '12px',
-              }}
-            >
+            <h3 style={{
+              fontSize: '22px',
+              fontWeight: '900',
+              color: 'var(--primary-color, #ff4500)',
+              marginBottom: '12px',
+            }}>
               المنح المفضلة
             </h3>
 
-            {/* Body Text */}
-            <p 
-              className="text-gray-600 dark:text-gray-300 text-center leading-relaxed mb-8 text-base font-semibold"
-              style={{
-                color: 'var(--text-color, #333)',
-                fontSize: '16px',
-                lineHeight: '1.6',
-                marginBottom: '32px',
-              }}
-            >
+            <p style={{
+              color: 'var(--text-color, #333)',
+              fontSize: '16px',
+              lineHeight: '1.6',
+              marginBottom: '32px',
+            }}>
               الرجاء تسجيل الدخول للاستفادة من ميزة المنح المفضلة.
             </p>
 
-            {/* Actions */}
-            <div 
-              className="flex flex-col gap-3"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-              }}
-            >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <button
                 onClick={() => {
                   setShowAuthModal(false);
                   navigate('/login');
                 }}
-                className="w-full bg-[#ff4500] hover:bg-[#e03d00] text-white py-3.5 rounded-2xl font-bold text-base transition-all duration-300 shadow-lg shadow-[#ff4500]/20 flex items-center justify-center gap-2 hover:scale-[1.02] transform active:scale-98 cursor-pointer border-none"
                 style={{
                   width: '100%',
                   padding: '14px',
@@ -406,14 +352,12 @@ const Scholarships = () => {
                   fontWeight: '700',
                   cursor: 'pointer',
                   boxShadow: '0 4px 12px rgba(255, 69, 0, 0.2)',
-                  transition: 'all 0.2s ease',
                 }}
               >
                 تسجيل الدخول
               </button>
               <button
                 onClick={() => setShowAuthModal(false)}
-                className="w-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-gray-600 dark:text-gray-300 py-3.5 rounded-2xl font-bold text-base transition-all duration-300 flex items-center justify-center cursor-pointer border border-gray-200 dark:border-slate-700"
                 style={{
                   width: '100%',
                   padding: '14px',
@@ -424,7 +368,6 @@ const Scholarships = () => {
                   fontSize: '16px',
                   fontWeight: '700',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
                 }}
               >
                 إلغاء

@@ -13,16 +13,20 @@ function Main() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [favorites, setFavorites] = useState([]);
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true); // ← جديد
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      setAuthLoading(false); // ← Firebase جاوب
     });
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
+    if (authLoading) return; // ← انتظر Firebase قبل أي شي
+
     if (user) {
       const fetchFavorites = async () => {
         try {
@@ -30,29 +34,27 @@ function Main() {
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {
             const data = docSnap.data();
-            // تأكيد تحويل كل المعرفات إلى نصوص لضمان المطابقة
             const favs = (data.favorites || []).map(f => String(f));
             setFavorites(favs);
           } else {
-      setFavorites([]);
-    }
-    } catch (error) {
+            setFavorites([]);
+          }
+        } catch (error) {
           console.error("Error fetching favorites from Firestore:", error);
-    }
-  };
+        }
+      };
       fetchFavorites();
     } else {
       setFavorites([]);
     }
-  }, [user]);
-  
+  }, [user, authLoading]); // ← أضف authLoading للـ dependency
+
   const gridRef = useRef(null);
   const [isDown, setIsDown] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
   useEffect(() => {
-    // جلب كل المنح المفتوحة
     fetch('/scholarships.json')
       .then(res => res.json())
       .then(data => {
@@ -101,6 +103,7 @@ function Main() {
   }, [scholarships, loading]);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
   const getCountdown = (deadline) => {
     if (!deadline) return null;
     const today = new Date();
@@ -130,7 +133,6 @@ function Main() {
       newFavs = [...favorites, strId];
     }
 
-    // تحديث الحالة محلياً فوراً (Optimistic UI)
     setFavorites(newFavs);
 
     try {
@@ -139,7 +141,6 @@ function Main() {
       console.log("تم تحديث المفضلة بنجاح");
     } catch (error) {
       console.error("خطأ في حفظ المفضلة:", error);
-      // في حال الخطأ، يمكن إعادة الحالة القديمة هنا إذا لزم الأمر
     }
   };
 
@@ -184,7 +185,6 @@ function Main() {
   return (
     <div className="main-home-container px-4 md:px-6">
       <style>{`
-        /* Responsive utility styles for Main page component */
         .main-home-container {
           width: 100%;
         }
@@ -193,7 +193,6 @@ function Main() {
           padding-right: 1rem !important;
         }
         
-        /* Retain full-width hero bg */
         .main-home-container > .hero {
           margin-left: -1rem !important;
           margin-right: -1rem !important;
@@ -210,7 +209,6 @@ function Main() {
           }
         }
 
-        /* Available Scholarships horizontal scroll on all views */
         #open-scholarships-grid {
           display: flex !important;
           flex-direction: row !important;
@@ -250,7 +248,6 @@ function Main() {
             min-width: 270px !important;
             max-width: 320px !important;
           }
-          /* Hide slider buttons on mobile */
           .slider-wrapper .slider-btn {
             display: none !important;
           }
@@ -262,7 +259,6 @@ function Main() {
           }
         }
 
-        /* About Molim Section layout */
         .cards-wrapper.flex-col {
           display: flex !important;
           flex-direction: column !important;
@@ -421,7 +417,6 @@ function Main() {
 
       {showAuthModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm transition-all duration-300"
           style={{
             position: 'fixed',
             top: 0,
@@ -439,7 +434,6 @@ function Main() {
           onClick={() => setShowAuthModal(false)}
         >
           <div 
-            className="relative w-full max-w-md bg-white dark:bg-[#0f172a] rounded-3xl p-8 text-right rtl shadow-2xl border border-gray-100 dark:border-slate-800 transform transition-all duration-300 scale-100"
             style={{
               position: 'relative',
               width: '90%',
@@ -454,9 +448,7 @@ function Main() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
             <button 
-              className="absolute top-5 left-5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 text-2xl font-bold transition-colors cursor-pointer bg-transparent border-none"
               onClick={() => setShowAuthModal(false)}
               style={{
                 position: 'absolute',
@@ -472,66 +464,45 @@ function Main() {
               ✕
             </button>
 
-            {/* Red Heart Icon */}
-            <div 
-              className="w-20 h-20 mx-auto mb-6 bg-red-50 dark:bg-red-500/10 rounded-full flex items-center justify-center text-red-500 text-4xl shadow-inner"
-              style={{
-                width: '80px',
-                height: '80px',
-                margin: '0 auto 24px',
-                backgroundColor: 'rgba(255, 69, 0, 0.08)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#ff4500',
-                fontSize: '36px',
-              }}
-            >
-              <i className="fa-solid fa-heart animate-pulse"></i>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              margin: '0 auto 24px',
+              backgroundColor: 'rgba(255, 69, 0, 0.08)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#ff4500',
+              fontSize: '36px',
+            }}>
+              <i className="fa-solid fa-heart"></i>
             </div>
 
-            {/* Title */}
-            <h3 
-              className="text-2xl font-black text-center text-gray-900 dark:text-white mb-3"
-              style={{
-                fontSize: '22px',
-                fontWeight: '900',
-                color: 'var(--primary-color, #ff4500)',
-                marginBottom: '12px',
-              }}
-            >
+            <h3 style={{
+              fontSize: '22px',
+              fontWeight: '900',
+              color: 'var(--primary-color, #ff4500)',
+              marginBottom: '12px',
+            }}>
               المنح المفضلة
             </h3>
 
-            {/* Body Text */}
-            <p 
-              className="text-gray-600 dark:text-gray-300 text-center leading-relaxed mb-8 text-base font-semibold"
-              style={{
-                color: 'var(--text-color, #333)',
-                fontSize: '16px',
-                lineHeight: '1.6',
-                marginBottom: '32px',
-              }}
-            >
+            <p style={{
+              color: 'var(--text-color, #333)',
+              fontSize: '16px',
+              lineHeight: '1.6',
+              marginBottom: '32px',
+            }}>
               الرجاء تسجيل الدخول للاستفادة من ميزة المنح المفضلة.
             </p>
 
-            {/* Actions */}
-            <div 
-              className="flex flex-col gap-3"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-              }}
-            >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <button
                 onClick={() => {
                   setShowAuthModal(false);
                   navigate('/login');
                 }}
-                className="w-full bg-[#ff4500] hover:bg-[#e03d00] text-white py-3.5 rounded-2xl font-bold text-base transition-all duration-300 shadow-lg shadow-[#ff4500]/20 flex items-center justify-center gap-2 hover:scale-[1.02] transform active:scale-98 cursor-pointer border-none"
                 style={{
                   width: '100%',
                   padding: '14px',
@@ -543,14 +514,12 @@ function Main() {
                   fontWeight: '700',
                   cursor: 'pointer',
                   boxShadow: '0 4px 12px rgba(255, 69, 0, 0.2)',
-                  transition: 'all 0.2s ease',
                 }}
               >
                 تسجيل الدخول
               </button>
               <button
                 onClick={() => setShowAuthModal(false)}
-                className="w-full bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-gray-600 dark:text-gray-300 py-3.5 rounded-2xl font-bold text-base transition-all duration-300 flex items-center justify-center cursor-pointer border border-gray-200 dark:border-slate-700"
                 style={{
                   width: '100%',
                   padding: '14px',
@@ -561,7 +530,6 @@ function Main() {
                   fontSize: '16px',
                   fontWeight: '700',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease',
                 }}
               >
                 إلغاء

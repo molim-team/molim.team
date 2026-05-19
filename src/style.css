@@ -706,6 +706,8 @@ footer p {
 }
 
 .faq-item {
+  padding-right: 20px;
+  padding-left: 20px;
   background: var(--card-bg);
   border-radius: 12px;
   margin-bottom: 15px;
@@ -2782,4 +2784,14 @@ footer p {
 .faq-collapse-wrapper .answer-content {
   overflow: hidden;
   min-height: 0;
+}
+
+/* نطبق الخط على النصوص والعناوين فقط، ونستثني الأيقونات */
+body, h1, h2, h3, h4, h5, h6, p, span, a, button, input, select, textarea {
+    font-family: 'Baloo Bhaijaan 2', sans-serif !important;
+}
+
+/* نضمن أن أيقونات Font Awesome ترجع لخطها الأصلي وتشتغل تمام */
+.fa, .fas, .far, .fal, .fab, [class^="fa-"], [class*=" fa-"] {
+    font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free', 'Font Awesome' !important;
 }

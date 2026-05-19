@@ -67,13 +67,19 @@
   --admin-section-divider-border: #ff4500;
 }
 
+
 [data-theme="dark"] {
   --bg-color: #0d1b2a;
-  --text-color: #eaeaea;
-  --header-bg: #0f2140;
+
+
+  --card-bg: #0f172a;
+  --header-bg: #0f172a;
+  --text-color: #f1f5f9;
+  --card-border: rgba(255, 255, 255, 0.1);
+  /* ... بقية المتغيرات */
   --header-border-bottom: #1a3a6e;
-  --card-bg: #132035;
-  --card-border: #1e3a6e;
+
+
   --primary-color: #ff4500;
   --secondary-color: #7a9cc4;
   --hero-bg-gradient: linear-gradient(135deg, rgba(5,15,35,0.90), rgba(10,20,45,0.80));
@@ -220,19 +226,21 @@ nav a:hover {
 }
 
 /* Dark Mode Toggle Button */
+/* تحسين شكل زر التبديل في الهيدر */
 .dark-mode-toggle {
-  background: none;
-  border: none;
-  font-size: 22px;
+  background: rgba(255, 69, 0, 0.1);
+  border: 1px solid var(--primary-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
   cursor: pointer;
-  color: var(--primary-color);
-  transition: color 0.3s;
+  font-size: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
-}
 
+  transition: all 0.3s ease;
+}
 .dark-mode-toggle:hover {
   color: var(--secondary-color);
 }
@@ -261,7 +269,6 @@ nav a:hover {
   max-width: 80%;
   position: relative;
   z-index: 2;
-  filter: drop-shadow(0 0 25px var(--hero-logo-shadow)) brightness(1.3);
   animation: floatLogo 3s ease-in-out infinite;
   transition: transform 0.3s, filter 0.5s ease;
 }
@@ -300,7 +307,6 @@ nav a:hover {
   margin-bottom: 35px;
   transition: color 0.5s ease;
 }
-
 .btn-main {
   background: var(--primary-color);
   color: white;
@@ -311,17 +317,14 @@ nav a:hover {
   font-weight: 700;
   transition: background 0.3s;
 }
-
 .btn-main:hover {
   background: var(--primary-color);
   filter: brightness(0.8);
 }
-
 /* ===== FEATURED ===== */
 .featured {
   padding: 60px 40px;
 }
-
 .featured h2 {
   font-size: 30px;
   margin-bottom: 30px;
@@ -338,6 +341,7 @@ nav a:hover {
 }
 
 /* ===== CARD ===== */
+/* التأكد من أن البطاقات تستخدم المتغير بشكل صحيح */
 .card {
   background: var(--card-bg);
   border-radius: 12px;
@@ -346,9 +350,17 @@ nav a:hover {
   transition: transform 0.3s, border-color 0.3s, background 0.5s ease, color 0.5s ease;
 }
 
+
+
+
+
 #open-scholarships-grid .card {
   opacity: 1 !important;
 }
+
+
+
+
 
 .card:hover {
   transform: translateY(-5px);
@@ -368,6 +380,16 @@ nav a:hover {
   color: var(--primary-color);
   transition: color 0.5s ease;
 }
+
+
+
+
+
+
+
+
+
+
 
 .card .country {
   color: var(--secondary-color);
@@ -892,20 +914,6 @@ footer p {
     scroll-snap-align: start;
     flex-shrink: 0;
   }
-
-  .footer-content {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 30px 20px;
-    gap: 30px;
-  }
-
-  .footer-brand {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
 }
 
 /* ===== SCROLL ANIMATION ===== */
@@ -988,23 +996,27 @@ footer p {
 /* ===== FOOTER REDESIGN ===== */
 .footer-content {
   display: flex;
+  /* row-reverse لتبدأ العناصر من اليمين (الشعار) إلى اليسار (تواصل معنا) */
+  flex-direction: row-reverse; 
   justify-content: space-between;
+  align-items: flex-start;
   gap: 40px;
   padding: 50px 60px;
   flex-wrap: wrap;
 }
 
 .footer-brand {
+  flex: 1; /* يعطي القسم مساحة مرنة بالتساوي */
   max-width: 250px;
-  text-align: center;
+  text-align: right; 
 }
 
 .footer-logo {
   height: 90px;
   margin-bottom: 0px;
   display: block;
-  margin-left: auto;
-  margin-right: auto;
+  margin-left: 0; 
+  margin-right: 0; 
 }
 
 .footer-brand p {
@@ -1013,6 +1025,25 @@ footer p {
   line-height: 1.8;
   margin-top: 0;
   transition: color 0.5s ease;
+}
+
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: right;
+  flex: 1; /* يعطي القسم مساحة مرنة بالتساوي ليصبح في المنتصف */
+  max-width: 200px;
+}
+
+/* أضفنا هذا القسم ليعطي "تواصل معنا" مساحة مستقلة في أقصى اليسار */
+.footer-social {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: right;
+  flex: 1; /* يعطي القسم مساحة مرنة بالتساوي ليذهب لليسار */
+  max-width: 250px;
 }
 
 .footer-links h4,
@@ -1037,7 +1068,6 @@ footer p {
 .footer-social a:hover {
   color: var(--primary-color);
 }
-
 .footer-bottom {
   border-top: 1px solid var(--footer-bottom-border);
   text-align: center;
@@ -1487,7 +1517,7 @@ footer p {
 .major-list {
   list-style: none;
   padding: 0;
-  margin-bottom: 20px; 
+  margin-bottom: 20px;
 }
 
 .major-list li {
@@ -2732,3 +2762,4 @@ footer p {
     font-size: 1.1rem;
   }
 }
+

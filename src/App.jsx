@@ -27,6 +27,10 @@ import './style.css';
 function Header() {
   const [user, setUser] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('theme') === 'dark' || 
+           (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -34,6 +38,18 @@ function Header() {
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
   const getButtonText = () => {
     if (user) {
@@ -59,21 +75,31 @@ function Header() {
         </Link>
       </div>
 
-      <button 
-        className={`menu-toggle ${isMenuOpen ? 'active' : ''}`} 
-        onClick={toggleMenu}
-        aria-label="قائمة التنقل"
-      >
-        <span className="bar"></span>
-        <span className="bar"></span>
-        <span className="bar"></span>
-      </button>
+      <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+        <button 
+          className="dark-mode-toggle" 
+          onClick={toggleDarkMode}
+          aria-label="تبديل الوضع"
+        >
+          {isDarkMode ? '🌙' : '☀️'}
+        </button>
+
+        <button 
+          className={`menu-toggle ${isMenuOpen ? 'active' : ''}`} 
+          onClick={toggleMenu}
+          aria-label="قائمة التنقل"
+        >
+          <span className="bar"></span>
+          <span className="bar"></span>
+          <span className="bar"></span>
+        </button>
+      </div>
 
       <nav id="main-nav" className={isMenuOpen ? 'open' : ''}>
         <Link to="/" onClick={closeMenu}>الرئيسية</Link>
         <Link to="/scholarships" onClick={closeMenu}>المنح</Link>
-        <Link to="/quiz" onClick={closeMenu}>الاختبار المهني</Link>
-        <Link to="/major/all" onClick={closeMenu}>التخصصات</Link>
+        <Link to="/quiz" onClick={closeMenu}>اكتشف تخصصك المناسب</Link>
+        <Link to="/major/all" onClick={closeMenu}> التخصصات العالمية</Link>
         <Link to="/faq" onClick={closeMenu}>الأسئلة الشائعة</Link>
         <Link to="/contact" onClick={closeMenu}>تواصل معنا</Link>
         
@@ -89,19 +115,29 @@ function Footer() {
   return (
     <footer>
       <div className="footer-content">
+
+        <div className="footer-social">
+          <h4>تواصل معنا</h4>
+          <Link to="/@molim_ContactBot">الدعم الفني - تليجرام</Link>
+          <a href="mailto:molim.team@gmail.com">molim.team@gmail.com</a>
+        </div>
+
+       <div className="footer-links">
+          <h4>روابط سريعة</h4>
+          <Link to="/">الرئيسية</Link>
+          <Link to="/scholarships">جميع المنح</Link>
+          <Link to="/quiz">اختبار التخصص المناسب</Link>
+          <Link to="/faq">الأسئلة الشائعة</Link>
+          <Link to="/privacy">سياسة الخصوصية</Link>
+        </div>
+
         <div className="footer-brand">
           <img src="/images/logo.png" alt="مُلم" className="footer-logo"/>
           <p>منصتك الأولى لاكتشاف المنح الدراسية حول العالم</p>
         </div>
-        <div className="footer-links">
-          <h4>روابط سريعة</h4>
-          <Link to="/">الرئيسية</Link>
-          <Link to="/scholarships">جميع المنح</Link>
-          <Link to="/quiz">الاختبار المهني</Link>
-          <Link to="/faq">الأسئلة الشائعة</Link>
-          <Link to="/privacy">سياسة الخصوصية</Link>
-        </div>
+
       </div>
+
       <div className="footer-bottom">
         <p>مُلم © 2026 | جميع الحقوق محفوظة</p>
       </div>

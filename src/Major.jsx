@@ -8,25 +8,26 @@ function Majors() {
     ...value
   })));
 
-  const [openKey, setOpenKey] = useState(null);
+  const [openKeys, setOpenKeys] = useState(new Set());
   const location = useLocation();
 
-  // التعامل مع الروابط المباشرة (Deep Linking) عند وجود hash في الرابط
   useEffect(() => {
     if (location.hash) {
       const targetKey = decodeURIComponent(location.hash.substring(1));
-      setOpenKey(targetKey);
-      setTimeout(() => {
-        const element = document.getElementById(targetKey);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 500);
+      setOpenKeys(new Set([targetKey]));
     }
-  }, [location.hash]);
+  }, []);
 
   const toggleFaq = (key) => {
-    setOpenKey(openKey === key ? null : key);
+    setOpenKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
   };
 
   return (
@@ -38,15 +39,15 @@ function Majors() {
 
       <section className="faq-section" id="majors-container">
         {majorsData.map((major) => (
-          <div className="faq-item" id={major.id} key={major.id}>
+          <div className="faq-item" key={major.id}>
             <div
-              className={`faq-question ${openKey === major.id ? 'active' : ''}`}
+              className={`faq-question ${openKeys.has(major.id) ? 'active' : ''}`}
               onClick={() => toggleFaq(major.id)}
             >
               <span>{major.name}</span>
-              <span className="faq-icon">{openKey === major.id ? '−' : '+'}</span>
+              <span className="faq-icon">{openKeys.has(major.id) ? '−' : '+'}</span>
             </div>
-            <div className={`faq-collapse-wrapper ${openKey === major.id ? 'is-open' : ''}`}>
+            <div className={`faq-collapse-wrapper ${openKeys.has(major.id) ? 'is-open' : ''}`}>
               <div className="answer-content">
                 <div className="major-section-title">نظرة عامة</div>
                 <p className="major-text">{major.overview}</p>

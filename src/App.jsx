@@ -116,12 +116,12 @@ function Footer() {
     <footer>
       <div className="footer-content">
 
-        <div className="footer-social">
-          <h4>تواصل معنا</h4>
-          <Link to="/@molim_ContactBot">الدعم الفني - تليجرام</Link>
-          <a href="mailto:molim.team@gmail.com">molim.team@gmail.com</a>
+        <div className="footer-brand">
+          <img src="/images/logo.png" alt="مُلم" className="footer-logo"/>
+          <p>منصتك الأولى لاكتشاف المنح الدراسية حول العالم</p>
         </div>
 
+        
        <div className="footer-links">
           <h4>روابط سريعة</h4>
           <Link to="/">الرئيسية</Link>
@@ -131,10 +131,12 @@ function Footer() {
           <Link to="/privacy">سياسة الخصوصية</Link>
         </div>
 
-        <div className="footer-brand">
-          <img src="/images/logo.png" alt="مُلم" className="footer-logo"/>
-          <p>منصتك الأولى لاكتشاف المنح الدراسية حول العالم</p>
+        <div className="footer-social">
+          <h4>تواصل معنا</h4>
+          <Link to="/@molim_ContactBot">الدعم الفني - تليجرام</Link>
+          <a href="mailto:molim.team@gmail.com">molim.team@gmail.com</a>
         </div>
+
 
       </div>
 

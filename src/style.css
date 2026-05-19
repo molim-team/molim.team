@@ -2745,9 +2745,11 @@ footer p {
 
 
 .answer-content {
-  padding: 10px 25px 40px; /* زيادة الـ padding السفلي لمنع انقطاع النص */
+  padding: 0; 
   border-top: 1px solid var(--card-border);
   line-height: 1.8;
+  overflow: hidden;
+  min-height: 0;
 }
 
 /* تحسين شكل رأس التخصص عند الفتح */
@@ -2759,7 +2761,7 @@ footer p {
 /* تعديل للهواتف */
 @media (max-width: 768px) {
   .answer-content {
-    padding: 10px 15px 35px;
+    padding: 0;
   }
   .major-section-title {
     font-size: 1.1rem;
@@ -2779,4 +2781,5 @@ footer p {
 
 .faq-collapse-wrapper .answer-content {
   overflow: hidden;
+  min-height: 0;
 }

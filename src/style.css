@@ -711,7 +711,6 @@ footer p {
   margin-bottom: 15px;
   border: 1px solid var(--card-border);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
   transition: background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
 }
 
@@ -740,19 +739,6 @@ footer p {
   transition: color 0.5s ease;
 }
 
-.faq-answer {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.4s ease;
-  padding: 0 25px;
-  color: var(--text-color);
-  line-height: 1.8;
-  font-size: 15px;
-}
-
-.faq-answer[style*="max-height"] {
-  padding: 0 25px 20px;
-}
 
 /* ===== ABOUT SECTION ===== */
 .about-section {
@@ -997,7 +983,7 @@ footer p {
 .footer-content {
   display: flex;
   /* row-reverse لتبدأ العناصر من اليمين (الشعار) إلى اليسار (تواصل معنا) */
-  flex-direction: row-reverse; 
+  flex-direction: row; 
   justify-content: space-between;
   align-items: flex-start;
   gap: 40px;
@@ -1099,6 +1085,12 @@ footer p {
     align-items: center;
     padding: 30px 20px;
     gap: 30px;
+  }
+
+  .footer-brand{
+    align-items: center;
+    display: flex;
+    flex-direction: column;
   }
 
   .footer-brand,
@@ -2751,12 +2743,6 @@ footer p {
   gap: 1rem !important;
 }
 
-/* تنسيقات الأكورديون المحسنة */
-.faq-collapse-wrapper {
-  overflow: hidden;
-  transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  background: var(--card-bg);
-}
 
 .answer-content {
   padding: 10px 25px 40px; /* زيادة الـ padding السفلي لمنع انقطاع النص */

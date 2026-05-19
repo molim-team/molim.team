@@ -124,7 +124,6 @@ function Footer() {
           <Link to="/scholarships">جميع المنح</Link>
           <Link to="/quiz">اختبار التخصص المناسب</Link>
           <Link to="/faq">الأسئلة الشائعة</Link>
-          <Link to="/privacy">سياسة الخصوصية</Link>
         </div>
 
         <div className="footer-social">
@@ -136,6 +135,7 @@ function Footer() {
 
       <div className="footer-bottom">
         <p>مُلم © 2026 | جميع الحقوق محفوظة</p>
+        <Link to="/privacy">سياسة الخصوصية</Link>
       </div>
     </footer>
   );

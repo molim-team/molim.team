@@ -5,7 +5,7 @@ import { useFavorites } from './FavoritesContext';
 const Scholarships = () => {
   const navigate = useNavigate();
   const [scholarships, setScholarships] = useState([]);
-  const [loadingScholarships, setLoadingScholarships] = useState(true); // ← جديد
+  const [loadingScholarships, setLoadingScholarships] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [degreeFilter, setDegreeFilter] = useState('all');
@@ -13,14 +13,15 @@ const Scholarships = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showTopBtn, setShowTopBtn] = useState(false);
 
-  const { favorites, toggleFav: favToggle, user } = useFavorites();
+  // 1. جلب authLoading من الـ Context لمنع العرض المتسرع
+  const { favorites, toggleFav: favToggle, user, authLoading } = useFavorites();
 
   useEffect(() => {
     fetch('/scholarships.json')
       .then(res => res.json())
       .then(data => {
         setScholarships(data);
-        setLoadingScholarships(false); // ← انتهى التحميل
+        setLoadingScholarships(false);
       })
       .catch(err => {
         console.error('خطأ:', err);
@@ -66,9 +67,15 @@ const Scholarships = () => {
     return matchSearch && matchStatus && matchDegree;
   });
 
-  const favoriteScholarships = scholarships.filter(s => favorites.includes(String(s.id)));
+  // 2. الفلترة الذكية: لا تفلتر المفضلة كمصفوفة فارغة إذا كان السيرفر لا يزال يحمل البيانات
+  const favoriteScholarships = (loadingScholarships || authLoading) 
+    ? [] 
+    : scholarships.filter(s => favorites.includes(String(s.id)));
 
   useEffect(() => {
+    // منع مراقب الكروت من العمل العشوائي أثناء التحميل
+    if (loadingScholarships || authLoading) return;
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) entry.target.classList.add('visible');
@@ -81,41 +88,46 @@ const Scholarships = () => {
     return () => {
       cards.forEach(card => observer.unobserve(card));
     };
-  }, [filteredScholarships, favoriteScholarships, activeTab]);
+  }, [filteredScholarships, favoriteScholarships, activeTab, loadingScholarships, authLoading]);
 
-  const ScholarshipCard = ({ s }) => (
-    <div className="card">
-      <button
-        className={`fav-btn ${favorites.includes(String(s.id)) ? 'active' : ''}`}
-        aria-label={favorites.includes(String(s.id)) ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleFav(s.id);
-        }}
-      >
-        <i className={`${favorites.includes(String(s.id)) ? 'fa-solid' : 'fa-regular'} fa-heart`}></i>
-      </button>
-      {s.flag && (s.flag.startsWith('http') || s.flag.includes('/') || s.flag.includes('.')) ? (
-        <img className="card-flag" src={s.flag} alt="flag" />
-      ) : (
-        <span className="card-flag">{s.flag || ''}</span>
-      )}
-      <h3>{s.name}</h3>
-      <p className="country">📍 {s.country}</p>
-      <p className="degree">🎓 {s.degree}</p>
-      <span className={`status ${(s.open === true || s.open === 'true') ? 'open' : 'closed'}`}>
-        {(s.open === true || s.open === 'true') ? '✅ التقديم مفتوح' : '🔴 التقديم مغلق'}
-      </span>
-      <p className="desc">{s.description || ''}</p>
-      {s.open_date && <p className="deadline">📅 موعد فتح التقديم: {s.open_date}</p>}
-      <p className="deadline">📅 آخر موعد للتقديم: {s.deadline}</p>
-      <Link to={`/scholarship/${s.id}`} className="btn-details">تفاصيل المنحة كاملة ←</Link>
-      <a href={s.link} target="_blank" rel="noreferrer">زيارة الموقع الرسمي ↗</a>
-      <a className="btn-details" onClick={() => shareScholarship(s.id, s.name, s.country)}>
-        📤 شارك المنحة
-      </a>
-    </div>
-  );
+  const ScholarshipCard = ({ s }) => {
+    // تحويل الطرفين لنصوص لضمان دقة عمل اللون الأحمر للقلب
+    const isFav = favorites.includes(String(s.id));
+
+    return (
+      <div className="card">
+        <button
+          className={`fav-btn ${isFav ? 'active' : ''}`}
+          aria-label={isFav ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleFav(s.id);
+          }}
+        >
+          <i className={`${isFav ? 'fa-solid' : 'fa-regular'} fa-heart`}></i>
+        </button>
+        {s.flag && (s.flag.startsWith('http') || s.flag.includes('/') || s.flag.includes('.')) ? (
+          <img className="card-flag" src={s.flag} alt="flag" />
+        ) : (
+          <span className="card-flag">{s.flag || ''}</span>
+        )}
+        <h3>{s.name}</h3>
+        <p className="country">📍 {s.country}</p>
+        <p className="degree">🎓 {s.degree}</p>
+        <span className={`status ${(s.open === true || s.open === 'true') ? 'open' : 'closed'}`}>
+          {(s.open === true || s.open === 'true') ? '✅ التقديم مفتوح' : '🔴 التقديم مغلق'}
+        </span>
+        <p className="desc">{s.description || ''}</p>
+        {s.open_date && <p className="deadline">📅 موعد فتح التقديم: {s.open_date}</p>}
+        <p className="deadline">📅 آخر موعد للتقديم: {s.deadline}</p>
+        <Link to={`/scholarship/${s.id}`} className="btn-details">تفاصيل المنحة كاملة ←</Link>
+        <a href={s.link} target="_blank" rel="noreferrer">زيارة الموقع الرسمي ↗</a>
+        <a className="btn-details" onClick={() => shareScholarship(s.id, s.name, s.country)}>
+          📤 شارك المنحة
+        </a>
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col min-h-screen justify-between">
@@ -165,7 +177,6 @@ const Scholarships = () => {
             <section className="featured">
               <div className="grid">
                 {loadingScholarships ? (
-                  // skeleton loading بدل رسالة "لا توجد منح"
                   Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className="skeleton-card">
                       <div className="skeleton-line skeleton-flag"></div>
@@ -193,11 +204,16 @@ const Scholarships = () => {
           <div id="favorites-section">
             <section className="featured">
               <div className="grid">
-                {favoriteScholarships.map(s => (
-                  <ScholarshipCard key={s.id} s={s} />
-                ))}
+                {/* 3. إظهار السكيلتون أو الانتظار حتى انتهاء جلب المفضلة */}
+                {(loadingScholarships || authLoading) ? (
+                  <p>جاري تحميل المفضلة... ⏳</p>
+                ) : (
+                  favoriteScholarships.map(s => (
+                    <ScholarshipCard key={s.id} s={s} />
+                  ))
+                )}
               </div>
-              {favoriteScholarships.length === 0 && (
+              {!(loadingScholarships || authLoading) && favoriteScholarships.length === 0 && (
                 <p id="no-favorites">
                   لم تضف أي منحة للمفضلة بعد 💔<br />اضغط على القلب في أي منحة لحفظها هنا!
                 </p>

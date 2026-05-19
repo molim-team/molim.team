@@ -11,7 +11,8 @@ function Main() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  const { favorites, toggleFav: favToggle, user } = useFavorites();
+  // تم إضافة authLoading هنا لضمان مزامنة البيانات
+  const { favorites, toggleFav: favToggle, user, authLoading } = useFavorites();
 
   const gridRef = useRef(null);
   const [isDown, setIsDown] = useState(false);
@@ -53,6 +54,9 @@ function Main() {
   }, []);
 
   useEffect(() => {
+    // إيقاف المراقب أثناء التحميل لتجنب الأخطاء البصرية
+    if (loading || authLoading) return;
+
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) entry.target.classList.add('visible');
@@ -64,7 +68,7 @@ function Main() {
     });
 
     return () => observer.disconnect();
-  }, [scholarships, loading]);
+  }, [scholarships, loading, authLoading]);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -269,7 +273,8 @@ function Main() {
             onMouseUp={handleMouseUp}
             onMouseMove={handleMouseMove}
           >
-            {loading ? (
+            {/* التعديل الجوهري هنا: ننتظر المنح والـ Favorites معاً */}
+            {(loading || authLoading) ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="skeleton-card">
                   <div className="skeleton-line skeleton-flag"></div>

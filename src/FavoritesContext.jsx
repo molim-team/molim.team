@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from './firebase-config';
 
 const FavoritesContext = createContext();
@@ -9,9 +9,8 @@ export function FavoritesProvider({ children }) {
   const [favorites, setFavorites] = useState([]);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [dataLoading, setDataLoading] = useState(false);
 
-  // 1. مراقبة حالة تسجيل الدخول فقط
+  // 1. مراقبة الجلسة وتحديد الحساب الحالي
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -20,76 +19,81 @@ export function FavoritesProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
-  // 2. جلب البيانات فقط وفقط عندما يتغير الـ user.uid ويكون موجوداً فعلياً
+  // 2. جلب المفضلة من Firestore عند استقرار الـ UID
   useEffect(() => {
-    // إذا كان لسا يجيب حالة الدخول، أو ما فيه مستخدم، لا تسوي شيء ولا تصفّر المصفوفة الآن
-    if (authLoading) return; 
-    
+    if (authLoading) return;
+
     if (!user) {
-      setFavorites([]); // هنا نبرمج الخروج الصريح فقط لو تأكدنا أن المستخدم مو مسجل دخول
+      setFavorites([]);
       return;
     }
 
     const fetchFavorites = async () => {
-      setDataLoading(true);
       try {
         const docRef = doc(db, 'users', user.uid);
         const docSnap = await getDoc(docRef);
-        
+
         if (docSnap.exists()) {
           const data = docSnap.data();
-          // تحويل العناصر لنصوص لضمان مطابقتها دائماً
-          const fetchedFavs = (data.favorites || []).map(f => String(f));
-          setFavorites(fetchedFavs);
-          console.log("✅ تم جلب المفضلة من السيرفر:", fetchedFavs);
+          // التأكد التام من تحويل كافة المعرفات إلى نصوص منعا للتضارب
+          const cleanFavs = (data.favorites || []).map(item => String(item));
+          setFavorites(cleanFavs);
+          console.log("🎯 تم جلب المفضلة بنجاح من السيرفر:", cleanFavs);
         } else {
-          // إذا كان المستخدم جديد تماماً وما عنده دكيومنت
+          // إذا كان المستند غير موجود أصلاً (مستخدم جديد) ننشئه بمصفوفة فارغة
           await setDoc(docRef, { favorites: [] }, { merge: true });
           setFavorites([]);
         }
       } catch (error) {
-        console.error("❌ خطأ أثناء جلب المفضلة من Firestore:", error);
-      } finally {
-        setDataLoading(false);
+        console.error("❌ خطأ أثناء قراءة المفضلة من Firestore:", error);
       }
     };
 
     fetchFavorites();
-  }, [user?.uid, authLoading]); // الاعتماد على الـ uid مباشرة لمنع الـ Re-renders العشوائية
+  }, [user?.uid, authLoading]);
 
-  // 3. دالة الإضافة والحذف من المفضلة
-  const toggleFav = async (id) => {
+  // 3. دالة الحفظ الذكية (تتعامل مع الرقم والنص وتجبر Firestore على التحديث)
+  const toggleFav = async (scholarshipId) => {
     if (!user) {
-      console.log("⚠️ يجب تسجيل الدخول لإضافة المفضلة");
+      alert("الرجاء تسجيل الدخول أولاً لإضافة المنحة للمفضلة");
       return false;
     }
 
-    const strId = String(id);
+    // تحويل الـ ID القادم من الكرت إلى نص فوراً لحل مشكلة النوع البيانات
+    const stringId = String(scholarshipId);
     
-    // استخدام الأسلوب الوظيفي (Functional Update) لضمان التعامل مع أحدث State للمفضلة
-    setFavorites((prevFavorites) => {
-      const isExist = prevFavorites.includes(strId);
-      const newFavs = isExist
-        ? prevFavorites.filter(f => f !== strId)
-        : [...prevFavorites, strId];
+    // تحديد المصفوفة الجديدة محلياً لتحديث الواجهة فوراً
+    let updatedFavs = [];
 
-      // تحديث الفايربيس فوراً بالبيانات الجديدة
-      const docRef = doc(db, 'users', user.uid);
-      setDoc(docRef, { favorites: newFavs }, { merge: true })
-        .then(() => console.log("💾 تم التحديث في الفايربيس بنجاح"))
-        .catch((err) => {
-          console.error("❌ فشل الحفظ بالسيرفر:", err);
-          // هنا يمكنك إعادة الـ state القديمة لو أردت، لكن التحديث التلقائي يضمن تجربة مستخدم سريعة Optimistic UI
-        });
-
-      return newFavs;
+    setFavorites((currentFavs) => {
+      const isExist = currentFavs.includes(stringId);
+      updatedFavs = isExist 
+        ? currentFavs.filter(id => id !== stringId)
+        : [...currentFavs, stringId];
+        
+      return updatedFavs;
     });
 
-    return true;
+    // إرسال البيانات فوراً إلى الفايربيس باستخدام setDoc مع merge لضمان إنشائها لو اختفت
+    try {
+      const docRef = doc(db, 'users', user.uid);
+      await setDoc(docRef, { favorites: updatedFavs }, { merge: true });
+      console.log("💾 تم الحفظ والتثبيت في الفايربيس بنجاح للمعرف:", stringId);
+      return true;
+    } catch (error) {
+      console.error("❌ فشل تحديث السيرفر، تم التراجع محلياً. السبب الحقيقي:", error);
+      // التراجع عن التغيير في الواجهة لو فشل الاتصال بالسيرفر
+      const docRef = doc(db, 'users', user.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setFavorites((docSnap.data().favorites || []).map(item => String(item)));
+      }
+      return false;
+    }
   };
 
   return (
-    <FavoritesContext.Provider value={{ favorites, toggleFav, user, authLoading, dataLoading }}>
+    <FavoritesContext.Provider value={{ favorites, toggleFav, user, authLoading }}>
       {children}
     </FavoritesContext.Provider>
   );

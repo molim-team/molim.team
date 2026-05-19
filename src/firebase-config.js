@@ -1,78 +1,40 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from './firebase-config';
+import { initializeApp } from "firebase/app";
+import { getAuth, browserLocalPersistence, setPersistence } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
-const FavoritesContext = createContext();
 
-export function FavoritesProvider({ children }) {
-  const [favorites, setFavorites] = useState([]);
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (user) {
-      const fetchFavorites = async () => {
-        try {
-          const docRef = doc(db, 'users', user.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            setFavorites((data.favorites || []).map(f => String(f)));
-          } else {
-            // أنشئ document تلقائياً لو ما كان موجود
-            await setDoc(docRef, { favorites: [] }, { merge: true });
-            setFavorites([]);
-          }
-        } catch (error) {
-          console.error("خطأ في جلب المفضلة:", error);
-        }
-      };
-      fetchFavorites();
-    } else {
-      setFavorites([]);
-    }
-  }, [user, authLoading]);
-
-  const toggleFav = async (id) => {
-    if (!user) return false;
-
-    const strId = String(id);
-    const newFavs = favorites.includes(strId)
-      ? favorites.filter(f => f !== strId)
-      : [...favorites, strId];
-
-    setFavorites(newFavs);
-
-    try {
-      const docRef = doc(db, 'users', user.uid);
-      await setDoc(docRef, { favorites: newFavs }, { merge: true });
-      console.log("✅ تم حفظ المفضلة");
-    } catch (error) {
-      console.error("❌ خطأ في حفظ المفضلة:", error);
-      // أرجع الحالة القديمة لو فشل الحفظ
-      setFavorites(favorites);
-    }
-    return true;
-  };
-
-  return (
-    <FavoritesContext.Provider value={{ favorites, toggleFav, user, authLoading }}>
-      {children}
-    </FavoritesContext.Provider>
-  );
+if (typeof window !== "undefined" && import.meta.env.DEV) {
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN = import.meta.env.VITE_APPCHECK_DEBUG_TOKEN;
 }
 
-export function useFavorites() {
-  return useContext(FavoritesContext);
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+};
+
+const app = initializeApp(firebaseConfig);
+
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+
+setPersistence(auth, browserLocalPersistence).then(() => {
+  console.log("✅ persistence مضبوط");
+}).catch((error) => {
+  console.error("❌ خطأ في الـ persistence:", error);
+});
+
+if (typeof window !== "undefined") {
+  const siteKey = import.meta.env.VITE_FIREBASE_APP_CHECK_SITE_KEY;
+  if (siteKey) {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(siteKey),
+      isTokenAutoRefreshEnabled: true
+    });
+  }
 }

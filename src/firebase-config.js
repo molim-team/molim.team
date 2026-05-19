@@ -15,6 +15,16 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+
+// ← أول شي بعد getAuth مباشرة
+setPersistence(auth, browserLocalPersistence).then(() => {
+  console.log("✅ persistence مضبوط");
+}).catch((error) => {
+  console.error("❌ خطأ في الـ persistence:", error);
+});
+
 if (typeof window !== "undefined") {
   const siteKey = import.meta.env.VITE_FIREBASE_APP_CHECK_SITE_KEY;
   if (siteKey) {
@@ -24,11 +34,3 @@ if (typeof window !== "undefined") {
     });
   }
 }
-
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-
-// Firebase يحفظ جلسة المستخدم في المتصفح بشكل دائم
-setPersistence(auth, browserLocalPersistence).catch((error) => {
-  console.error("خطأ في ضبط الـ persistence:", error);
-});

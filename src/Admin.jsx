@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 function Admin() {
   // إعدادات المستودع والثوابت
   const OWNER = 'molim-team';
-  const REPO = 'molim-team.github.io';
+  const REPO = 'molim.team';
   const FILE = 'public/scholarships.json';
 
   // حالات لوحة التحكم (States)

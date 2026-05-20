@@ -1486,6 +1486,36 @@ footer p {
 .past-quiz-card { background: var(--card-bg, #fff); border: 1px solid rgba(255,69,0,0.12); border-radius: 16px; padding: 1.25rem 1.5rem; cursor: pointer; transition: all 0.2s ease; margin-bottom: 10px;}
 .past-quiz-card:hover { border-color: #ff4500; transform: translateY(-2px); }
 
+/* تنسيق زر تفاصيل التخصص البرتقالي الموحد */
+.major-card a {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    background-color: #ff4500 !important;
+    border: 1px solid #ff4500 !important;
+    border-radius: 8px !important;
+    padding: 8px 16px !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    cursor: pointer !important;
+}
+
+/* تأثير التفاعل عند مرور الماوس */
+.major-card a:hover {
+    background-color: #e03d00 !important;
+    border-color: #e03d00 !important;
+    color: #ffffff !important;
+}
+
+/* تأثير الضغط على الزر */
+.major-card a:active {
+    transform: scale(0.95) !important;
+}
+
 /* تسيقات صفحة التخصصات العالمية */
 .loading-container {
   text-align: center;

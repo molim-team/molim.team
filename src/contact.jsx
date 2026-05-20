@@ -6,7 +6,7 @@ function Contact() {
     {
       name: 'تليجرام',
       handle: '@Molim_Team',
-      link: 'https://t.me/Molim_Team',
+      link: 'https://t.me/Molim_Team/4',
       iconClass: 'fa-brands fa-telegram',
       className: 'telegram',
     },

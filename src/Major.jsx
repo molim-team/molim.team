@@ -12,11 +12,29 @@ function Majors() {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.hash) {
-      const targetKey = decodeURIComponent(location.hash.substring(1));
-      setOpenKeys(new Set([targetKey]));
+    let targetKey = null;
+
+    if (location.state && location.state.targetMajor) {
+      targetKey = location.state.targetMajor;
+    } else if (location.hash) {
+      targetKey = decodeURIComponent(location.hash.substring(1));
     }
-  }, []);
+
+    if (targetKey) {
+      // 1. فتح التخصص المقصود تلقائياً ليظهر محتواه
+      setOpenKeys(new Set([targetKey]));
+
+      // 2. النزول تلقائياً لمكان التخصص بعد فتحه
+      const timer = setTimeout(() => {
+        const element = document.getElementById(targetKey);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 150);
+
+      return () => clearTimeout(timer);
+    }
+  }, [location]);
 
   const toggleFaq = (key) => {
     setOpenKeys(prev => {
@@ -39,7 +57,8 @@ function Majors() {
 
       <section className="faq-section" id="majors-container">
         {majorsData.map((major) => (
-          <div className="faq-item" key={major.id}>
+          /* الـ id هنا ضروري جداً ليعرف المتصفح أين ينزل */
+          <div className="faq-item" key={major.id} id={major.id}>
             <div
               className={`faq-question ${openKeys.has(major.id) ? 'active' : ''}`}
               onClick={() => toggleFaq(major.id)}

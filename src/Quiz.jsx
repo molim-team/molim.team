@@ -252,15 +252,15 @@ function Quiz() {
                     <div className="major-desc">{major.desc}</div>
                     
                     <div style={{ marginTop: '0.6rem', marginBottom: '0.2rem' }}>
-                      <Link 
-                        to={`/major#${key}`} 
-                        className="inline-flex items-center gap-1.5 text-[0.8rem] font-semibold text-[#ff4500] bg-[#ff4500]/[0.08] hover:bg-[#ff4500]/[0.15] border border-[#ff4500]/20 px-3 py-1.5 rounded-lg transition-all duration-200"
-                      >
-                        تفاصيل التخصص
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M7 17l9.2-9.2M17 17V7H7"/>
-                        </svg>
-                      </Link>
+                     <Link 
+                      to="/major"
+                      state={{ targetMajor: key }}
+>
+                    <span>تفاصيل التخصص</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 17L19 5M19 5H7M19 5V17"/>
+                    </svg>
+                    </Link>
                     </div>
 
                     <div className="pct-bar-wrap">

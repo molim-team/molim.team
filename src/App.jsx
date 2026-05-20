@@ -17,6 +17,7 @@ import Privacy from './Privacy';
 import Quiz from './Quiz';
 import Admin from './Admin';
 import Major from './Major';
+import ScrollToTop from './ScrollToTop';
 
 import LlamamBot from './LlamamBot';
 
@@ -120,22 +121,22 @@ function Footer() {
 
         <div className="footer-links">
           <h4>روابط سريعة</h4>
-          <Link to="/">الرئيسية</Link>
-          <Link to="/scholarships">جميع المنح</Link>
-          <Link to="/quiz">اختبار التخصص المناسب</Link>
-          <Link to="/faq">الأسئلة الشائعة</Link>
+          <Link to="/" onClick={() => window.scrollTo(0, 0)}>الرئيسية</Link>
+          <Link to="/scholarships" onClick={() => window.scrollTo(0, 0)}>جميع المنح</Link>
+          <Link to="/quiz" onClick={() => window.scrollTo(0, 0)}>اختبار التخصص المناسب</Link>
+          <Link to="/faq" onClick={() => window.scrollTo(0, 0)}>الأسئلة الشائعة</Link>
         </div>
 
         <div className="footer-social">
           <h4>تواصل معنا</h4>
-          <Link to="/@molim_ContactBot">الدعم الفني - تليجرام</Link>
+          <a href="https://t.me/molim_ContactBot" target="_blank" rel="noopener noreferrer">الدعم الفني - تليجرام</a>
           <a href="mailto:molim.team@gmail.com">molim.team@gmail.com</a>
         </div>
       </div>
 
       <div className="footer-bottom">
         <p>مُلم © 2026 | جميع الحقوق محفوظة</p>
-        <Link to="/privacy">سياسة الخصوصية</Link>
+        <Link to="/privacy" onClick={() => window.scrollTo(0, 0)}>سياسة الخصوصية</Link>
       </div>
     </footer>
   );
@@ -145,6 +146,7 @@ function App() {
   return (
     <FavoritesProvider>
       <Router>
+        <ScrollToTop />
         <Header />
         
         <main className="main-content-wrapper">

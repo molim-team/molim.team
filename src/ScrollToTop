@@ -1,0 +1,13 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+
+export default function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    // هذا الأمر يخبر المتصفح بالصعود لأعلى الصفحة (0, 0)
+    window.scrollTo(0, 0);
+  }, [pathname]); // سيعمل الكود في كل مرة يتغير فيها المسار (الرابط)
+
+  return null;
+}

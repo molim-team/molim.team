@@ -8,7 +8,6 @@ const FavoritesContext = createContext();
 export function FavoritesProvider({ children }) {
   const [favorites, setFavorites] = useState([]);
   const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -32,8 +31,6 @@ export function FavoritesProvider({ children }) {
       } else {
         setFavorites([]);
       }
-
-      setAuthLoading(false);
     });
 
     return () => unsubscribe();
@@ -44,6 +41,8 @@ export function FavoritesProvider({ children }) {
 
     const stringId = String(scholarshipId).trim();
 
+    // ✅ الإصلاح: نحسب updatedFavs مباشرة من favorites الحالية
+    // بدل setFavorites callback الذي كان async ويسبب race condition
     const isExist = favorites.includes(stringId);
     const updatedFavs = isExist
       ? favorites.filter(id => id !== stringId)
@@ -57,13 +56,14 @@ export function FavoritesProvider({ children }) {
       return true;
     } catch (error) {
       console.error("❌ فشل تحديث السيرفر:", error);
-      setFavorites(favorites);
+      setFavorites(favorites); // نرجع للقيمة القديمة لو فشل السيرفر
       return false;
     }
   };
 
   return (
-    <FavoritesContext.Provider value={{ favorites, toggleFav, user, authLoading }}>
+    // ✅ بدون authLoading — يرجعها كما كانت في Main.jsx و Scholarships.jsx
+    <FavoritesContext.Provider value={{ favorites, toggleFav, user }}>
       {children}
     </FavoritesContext.Provider>
   );

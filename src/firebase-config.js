@@ -3,7 +3,6 @@ import { getAuth, browserLocalPersistence, setPersistence } from "firebase/auth"
 import { getFirestore } from "firebase/firestore";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
-
 if (typeof window !== "undefined" && import.meta.env.DEV) {
   self.FIREBASE_APPCHECK_DEBUG_TOKEN = import.meta.env.VITE_APPCHECK_DEBUG_TOKEN;
 }
@@ -18,7 +17,7 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
@@ -31,7 +30,8 @@ setPersistence(auth, browserLocalPersistence).then(() => {
 
 if (typeof window !== "undefined") {
   const siteKey = import.meta.env.VITE_FIREBASE_APP_CHECK_SITE_KEY;
-  if (siteKey) {
+  // شغّل App Check فقط في production وليس localhost
+  if (siteKey && !import.meta.env.DEV) {
     initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider(siteKey),
       isTokenAutoRefreshEnabled: true

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from './firebase-config';
@@ -8,26 +8,39 @@ const FavoritesContext = createContext();
 export function FavoritesProvider({ children }) {
   const [favorites, setFavorites] = useState([]);
   const [user, setUser] = useState(null);
+  const favoritesRef = useRef([]);
+
+  useEffect(() => {
+    favoritesRef.current = favorites;
+  }, [favorites]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
 
       if (currentUser) {
-        try {
-          const docRef = doc(db, 'users', currentUser.uid);
-          const docSnap = await getDoc(docRef);
-
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            const cleanFavs = (data.favorites || []).map(item => String(item).trim());
-            setFavorites(cleanFavs);
-          } else {
-            setFavorites([]);
+        let attempts = 0;
+        const tryFetch = async () => {
+          try {
+            const docRef = doc(db, 'users', currentUser.uid);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+              const data = docSnap.data();
+              const cleanFavs = (data.favorites || []).map(item => String(item).trim());
+              setFavorites(cleanFavs);
+            } else {
+              setFavorites([]);
+            }
+          } catch (error) {
+            attempts++;
+            if (attempts < 5) {
+              setTimeout(tryFetch, 1000);
+            } else {
+              console.error("❌ فشل بعد 5 محاولات:", error);
+            }
           }
-        } catch (error) {
-          console.error("❌ خطأ أثناء قراءة المفضلة:", error);
-        }
+        };
+        tryFetch();
       } else {
         setFavorites([]);
       }
@@ -40,13 +53,11 @@ export function FavoritesProvider({ children }) {
     if (!user) return false;
 
     const stringId = String(scholarshipId).trim();
-
-    // ✅ الإصلاح: نحسب updatedFavs مباشرة من favorites الحالية
-    // بدل setFavorites callback الذي كان async ويسبب race condition
-    const isExist = favorites.includes(stringId);
+    const currentFavs = favoritesRef.current;
+    const isExist = currentFavs.includes(stringId);
     const updatedFavs = isExist
-      ? favorites.filter(id => id !== stringId)
-      : [...favorites, stringId];
+      ? currentFavs.filter(id => id !== stringId)
+      : [...currentFavs, stringId];
 
     setFavorites(updatedFavs);
 
@@ -56,13 +67,12 @@ export function FavoritesProvider({ children }) {
       return true;
     } catch (error) {
       console.error("❌ فشل تحديث السيرفر:", error);
-      setFavorites(favorites); // نرجع للقيمة القديمة لو فشل السيرفر
+      setFavorites(currentFavs);
       return false;
     }
   };
 
   return (
-    // ✅ بدون authLoading — يرجعها كما كانت في Main.jsx و Scholarships.jsx
     <FavoritesContext.Provider value={{ favorites, toggleFav, user }}>
       {children}
     </FavoritesContext.Provider>

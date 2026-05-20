@@ -4,7 +4,7 @@ function Admin() {
   // إعدادات المستودع والثوابت
   const OWNER = 'molim-team';
   const REPO = 'molim-team.github.io';
-  const FILE = 'data/scholarships.json';
+  const FILE = 'public/scholarships.json';
 
   // حالات لوحة التحكم (States)
   const [token, setToken] = useState('');

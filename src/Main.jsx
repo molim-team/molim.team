@@ -55,7 +55,7 @@ function Main() {
 
   useEffect(() => {
     // إيقاف المراقب أثناء التحميل لتجنب الأخطاء البصرية
-    if (loading || authLoading) return;
+    if (loading) return;
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -68,7 +68,7 @@ function Main() {
     });
 
     return () => observer.disconnect();
-  }, [scholarships, loading, authLoading]);
+  }, [scholarships, loading]);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -274,7 +274,7 @@ function Main() {
             onMouseMove={handleMouseMove}
           >
             {/* التعديل الجوهري هنا: ننتظر المنح والـ Favorites معاً */}
-            {(loading || authLoading) ? (
+            {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="skeleton-card">
                   <div className="skeleton-line skeleton-flag"></div>

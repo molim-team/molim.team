@@ -19,15 +19,7 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-
-setPersistence(auth, browserLocalPersistence).then(() => {
-  console.log("✅ persistence مضبوط");
-}).catch((error) => {
-  console.error("❌ خطأ في الـ persistence:", error);
-});
-
+// يجب تهيئة App Check قبل أي خدمة Firebase أخرى (Auth, Firestore)
 if (typeof window !== "undefined") {
   const siteKey = import.meta.env.VITE_FIREBASE_APP_CHECK_SITE_KEY;
   // شغّل App Check فقط في production وليس localhost
@@ -38,3 +30,6 @@ if (typeof window !== "undefined") {
     });
   }
 }
+
+export const auth = getAuth(app);
+export const db = getFirestore(app);

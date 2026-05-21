@@ -8,6 +8,7 @@ const FavoritesContext = createContext();
 export function FavoritesProvider({ children }) {
   const [favorites, setFavorites] = useState([]);
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true); 
   const favoritesRef = useRef([]);
 
   useEffect(() => {
@@ -19,31 +20,25 @@ export function FavoritesProvider({ children }) {
       setUser(currentUser);
 
       if (currentUser) {
-        let attempts = 0;
-        const tryFetch = async () => {
-          try {
-            const docRef = doc(db, 'users', currentUser.uid);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-              const data = docSnap.data();
-              const cleanFavs = (data.favorites || []).map(item => String(item).trim());
-              setFavorites(cleanFavs);
-            } else {
-              setFavorites([]);
-            }
-          } catch (error) {
-            attempts++;
-            if (attempts < 5) {
-              setTimeout(tryFetch, 1000);
-            } else {
-              console.error("❌ فشل بعد 5 محاولات:", error);
-            }
+        try {
+          const docRef = doc(db, 'users', currentUser.uid);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            const cleanFavs = (data.favorites || []).map(item => String(item).trim());
+            setFavorites(cleanFavs);
+          } else {
+            setFavorites([]);
           }
-        };
-        tryFetch();
+        } catch (error) {
+          console.error("❌ خطأ في جلب المفضلة من السيرفر:", error);
+          setFavorites([]); 
+        }
       } else {
         setFavorites([]);
       }
+
+      setAuthLoading(false);
     });
 
     return () => unsubscribe();
@@ -73,7 +68,7 @@ export function FavoritesProvider({ children }) {
   };
 
   return (
-    <FavoritesContext.Provider value={{ favorites, toggleFav, user }}>
+    <FavoritesContext.Provider value={{ favorites, toggleFav, user, authLoading }}>
       {children}
     </FavoritesContext.Provider>
   );

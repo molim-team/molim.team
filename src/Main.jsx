@@ -273,7 +273,7 @@ function Main() {
             onMouseUp={handleMouseUp}
             onMouseMove={handleMouseMove}
           >
-            {/* التعديل الجوهري هنا: ننتظر المنح والـ Favorites معاً */}
+            {/* التعديل: ننتظر تحميل المنح فقط (loading) دون انتظار Firebase authLoading */}
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="skeleton-card">

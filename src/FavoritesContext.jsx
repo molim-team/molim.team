@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db } from './firebase-config';
+import { auth, db, appCheckReady } from './firebase-config';
 
 const FavoritesContext = createContext();
 
@@ -21,6 +21,7 @@ export function FavoritesProvider({ children }) {
 
       if (currentUser) {
         try {
+          await appCheckReady;
           const docRef = doc(db, 'users', currentUser.uid);
           const docSnap = await getDoc(docRef);
           if (docSnap.exists()) {

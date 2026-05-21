@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, browserLocalPersistence, setPersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
+import { initializeAppCheck, ReCaptchaV3Provider, getToken } from "firebase/app-check";
 
 if (typeof window !== "undefined" && import.meta.env.DEV) {
   self.FIREBASE_APPCHECK_DEBUG_TOKEN = import.meta.env.VITE_APPCHECK_DEBUG_TOKEN;
@@ -20,16 +20,28 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 
 // يجب تهيئة App Check قبل أي خدمة Firebase أخرى (Auth, Firestore)
+// ننشئ Promise ينتظر جاهزية أول توكن حتى لا يفشل أول طلب Firestore
+let appCheckReady = Promise.resolve();
+
 if (typeof window !== "undefined") {
   const siteKey = import.meta.env.VITE_FIREBASE_APP_CHECK_SITE_KEY;
   // شغّل App Check فقط في production وليس localhost
   if (siteKey && !import.meta.env.DEV) {
-    initializeAppCheck(app, {
+    const appCheck = initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider(siteKey),
       isTokenAutoRefreshEnabled: true
     });
+    // انتظر حتى يجهز أول توكن قبل أي طلب Firestore
+    appCheckReady = getToken(appCheck, /* forceRefresh */ false)
+      .then(() => {
+        console.log("✅ App Check token جاهز");
+      })
+      .catch((err) => {
+        console.warn("⚠️ فشل جلب App Check token، المتابعة على أي حال:", err);
+      });
   }
 }
 
+export { appCheckReady };
 export const auth = getAuth(app);
 export const db = getFirestore(app);

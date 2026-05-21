@@ -73,7 +73,7 @@ const Scholarships = () => {
     return matchSearch && matchStatus && matchDegree;
   });
 
-  const favoriteScholarships = (loadingScholarships || authLoading) 
+  const favoriteScholarships = loadingScholarships 
     ? [] 
     : scholarships.filter(s => favorites.includes(String(s.id)));
 
@@ -169,9 +169,9 @@ const Scholarships = () => {
 
             <section className="featured">
               <div className="grid">
-                {/* 🌟 1. التعديل الجوهري: ننتظر كلاً من loadingScholarships و authLoading */}
+                {/* 🌟 التعديل: ننتظر تحميل المنح فقط (loadingScholarships) دون انتظار Firebase authLoading */}
                 {loadingScholarships ? (
-                  // عرض بطاقات Skeleton طالما أي من الحالتين قيد التحميل
+                  // عرض بطاقات Skeleton طالما يتم تحميل المنح
                   Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className="skeleton-card">
                       <div className="skeleton-line skeleton-flag"></div>
@@ -183,7 +183,7 @@ const Scholarships = () => {
                     </div>
                   ))
                 ) : (
-                  // عرض بطاقات المنح الفعلية فقط بعد اكتمال التحميل
+                  // عرض بطاقات المنح الفعلية بعد اكتمال تحميل المنح
                   filteredScholarships.map(s => (
                     <ScholarshipCard key={s.id} s={s} />
                   ))
@@ -203,7 +203,7 @@ const Scholarships = () => {
           <div id="favorites-section">
             <section className="featured">
               <div className="grid">
-                {(loadingScholarships || authLoading) ? (
+                {loadingScholarships ? (
                   <p>جاري تحميل المفضلة... ⏳</p>
                 ) : (
                   favoriteScholarships.map(s => (
@@ -211,7 +211,7 @@ const Scholarships = () => {
                   ))
                 )}
               </div>
-              {!(loadingScholarships || authLoading) && favoriteScholarships.length === 0 && (
+              {!loadingScholarships && favoriteScholarships.length === 0 && (
                 <p id="no-favorites">
                   لم تضف أي منحة للمفضلة بعد 💔<br />اضغط على القلب في أي منحة لحفظها هنا!
                 </p>

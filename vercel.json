@@ -3,5 +3,10 @@
     { "source": "/amr/aseal/2608", "destination": "/admin" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  ],
+  "functions": {
+    "api/chat.js": {
+      "runtime": "nodejs20.x"
+    }
+  }
 }

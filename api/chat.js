@@ -122,39 +122,41 @@ export default async function handler(req) {
 
           buffer += decoder.decode(value, { stream: true });
           
-          let jsonChunks = buffer.split(/[\r\n]+/);
-          buffer = jsonChunks.pop() || '';
+          let lines = buffer.split('\n');
+          buffer = lines.pop() || '';
 
-          for (const chunk of jsonChunks) {
-            let cleanedChunk = chunk.trim();
-            
-            if (cleanedChunk.startsWith('data:')) {
-              cleanedChunk = cleanedChunk.replace(/^data:\s*/, '');
+          for (let line of lines) {
+            let cleanedLine = line.trim();
+            if (!cleanedLine) continue;
+            if (cleanedLine.startsWith('data:')) {
+              cleanedLine = cleanedLine.substring(5).trim();
             }
-            
-            if (!cleanedChunk || cleanedChunk === '[DONE]') continue;
-            
-            if (cleanedChunk.startsWith(',')) cleanedChunk = cleanedChunk.substring(1).trim();
-            if (cleanedChunk.startsWith('[') || cleanedChunk.startsWith(']')) continue;
+            if (cleanedLine.startsWith(',')) {
+              cleanedLine = cleanedLine.substring(1).trim();
+            }
+
+            if (cleanedLine === '[DONE]' || cleanedLine === '[' || cleanedLine === ']') continue;
 
             try {
-              const json = JSON.parse(cleanedChunk);
-              const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              const json = JSON.parse(cleanedLine);
+              const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
               if (text) {
                 controller.enqueue(encoder.encode(text));
               }
-            } catch (e) {}
+            } catch (e) {
+            }
           }
         }
 
         if (buffer.trim()) {
-          let finalChunk = buffer.trim().replace(/^data:\s*/, '');
-          if (finalChunk.startsWith(',')) finalChunk = finalChunk.substring(1).trim();
+          let finalLine = buffer.trim();
+          if (finalLine.startsWith('data:')) finalLine = finalLine.substring(5).trim();
+          if (finalLine.startsWith(',')) finalLine = finalLine.substring(1).trim();
           
-          if (finalChunk && finalChunk !== '[DONE]' && !finalChunk.startsWith(']')) {
+          if (finalLine && finalLine !== '[DONE]' && finalLine !== ']') {
             try {
-              const json = JSON.parse(finalChunk);
-              const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              const json = JSON.parse(finalLine);
+              const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
               if (text) controller.enqueue(encoder.encode(text));
             } catch (e) {}
           }

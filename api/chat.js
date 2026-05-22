@@ -1,4 +1,3 @@
-
 export const config = {
   runtime: 'edge',
 };
@@ -82,9 +81,8 @@ export default async function handler(req) {
       });
     }
 
-    // استدعاء Gemini API
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -112,7 +110,6 @@ export default async function handler(req) {
       });
     }
 
-    // إنشاء الـ Stream المباشر المتوافق مع معايير Edge و Vercel
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
     const reader = geminiRes.body.getReader();
@@ -126,43 +123,42 @@ export default async function handler(req) {
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+          
+          // تقسيم الاستجابة بناءً على صيغة الـ SSE من جوجل
+          const parts = buffer.split('data:');
+          buffer = parts.pop() || '';
 
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || !trimmed.startsWith('data:')) continue;
-
-            const jsonStr = trimmed.replace(/^data:\s*/, '');
-            if (jsonStr === '[DONE]') continue;
+          for (const chunk of parts) {
+            const trimmed = chunk.trim();
+            if (!trimmed || trimmed === '[DONE]') continue;
 
             try {
+              const jsonStr = trimmed.startsWith('{') ? trimmed : trimmed.substring(trimmed.indexOf('{'));
               const json = JSON.parse(jsonStr);
               const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
               if (text) {
                 controller.enqueue(encoder.encode(text));
               }
-            } catch (e) {}
+            } catch (e) {
+            }
           }
         }
 
-        // معالجة البيانات المتبقية في الـ Buffer
-        if (buffer.trim().startsWith('data:')) {
-          const jsonStr = buffer.trim().replace(/^data:\s*/, '');
-          if (jsonStr && jsonStr !== '[DONE]') {
-            try {
-              const json = JSON.parse(jsonStr);
+        if (buffer.trim()) {
+          try {
+            const trimmed = buffer.replace(/^data:\s*/, '').trim();
+            if (trimmed && trimmed !== '[DONE]') {
+              const json = JSON.parse(trimmed);
               const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
               if (text) controller.enqueue(encoder.encode(text));
-            } catch (e) {}
-          }
+            }
+          } catch (e) {}
         }
 
         controller.close();
       },
     });
 
-    // إعادة الـ الرد كـ Stream مباشر للمتصفح
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',

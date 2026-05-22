@@ -32,7 +32,7 @@ export default async function handler(req) {
       });
     }
 
-    const contents = history
+    let contents = history
       .map(m => {
         const role = m.role === 'assistant' ? 'model' : 'user';
 
@@ -71,6 +71,12 @@ export default async function handler(req) {
       contents.shift();
     }
 
+    const systemPrompt = "تعليمات النظام المهمة جداً: أنت مساعد ذكي اسمك لمام في منصة مُلم. تساعد الطلاب في الإجابة عن كل مايتعلق بالمنح الدراسية وإعداد الملفات الخاصة بها ك السيرة الذاتية وخطاب الحافز. يجب أن تتكلم دائماً باللغة العربية الفصحى البسيطة فقط. ممنوع منعاً باتاً استخدام اللهجة المصرية أو أي لهجة عامية. استخدم أسلوباً ودوداً وواضحاً بالعربية الفصحى فقط. أجب عن الرسالة التالية بناءً على هذه الهوية والتعليمات: ";
+
+    if (contents[0] && contents[0].parts && contents[0].parts[0] && contents[0].parts[0].text) {
+      contents[0].parts[0].text = systemPrompt + contents[0].parts[0].text;
+    }
+
     if (!GEMINI_API_KEY) {
       console.error('Missing GEMINI_API_KEY');
       return new Response(JSON.stringify({ error: 'GEMINI_API_KEY غير معرف في إعدادات السيرفر.' }), {
@@ -85,11 +91,6 @@ export default async function handler(req) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          system_instruction: {
-            parts: [{
-              text: 'أنت مساعد ذكي اسمك لمام في منصة مُلم. تساعد الطلاب في الإجابة عن كل مايتعلق بالمنح الدراسية وإعداد الملفات الخاصة بها ك السيرة الذاتية وخطاب الحافز. يجب أن تتكلم دائماً باللغة العربية الفصحى البسيطة فقط. ممنوع منعاً باتاً استخدام اللهجة المصرية أو أي لهجة عامية. استخدم أسلوباً ودوداً وواضحاً بالعربية الفصحى فقط.'
-            }]
-          },
           contents,
           generationConfig: {
             temperature: 0.7,

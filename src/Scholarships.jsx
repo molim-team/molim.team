@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useFavorites } from './FavoritesContext';
+
 const Scholarships = () => {
   const navigate = useNavigate();
   const [scholarships, setScholarships] = useState([]);
@@ -12,27 +13,23 @@ const Scholarships = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showTopBtn, setShowTopBtn] = useState(false);
 
-  // 🌟 جلب authLoading من الـ Context
+  // جلب البيانات من الـ Context
   const { favorites, toggleFav: favToggle, user, authLoading } = useFavorites();
 
   // جلب بيانات المنح من ملف JSON
   useEffect(() => {
-    // 💡 هام جداً: تأكد من أن ملف scholarships.json موجود في مجلد public/ وليس src/
     fetch('/scholarships.json')
       .then(res => res.json())
       .then(data => {
         setScholarships(data);
-        setLoadingScholarships(false); // إيقاف تحميل المنح
+        setLoadingScholarships(false);
       })
       .catch(err => {
         console.error('خطأ في جلب بيانات المنح:', err);
-        // حتى لو فشل، أوقف حالة التحميل حتى لا تبقى الشاشة معلقة
         setLoadingScholarships(false);
       });
   }, []);
 
-  // بقية دوال المكون (handleScroll, toggleFav, shareScholarship, scrollToTop) تبقى كما هي...
-  // ... (سأختصرها للعرض، تأكد من وجودها في كودك الأصلي)
   useEffect(() => {
     const handleScroll = () => {
       setShowTopBtn(window.scrollY > 300);
@@ -41,16 +38,20 @@ const Scholarships = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const toggleFav = async (id) => {
-    // تم إضافة شرط للتأكد من أن المودال يظهر فقط لغير المسجلين
+  const toggleFav = async (e, id) => {
+    // 💡 منع السلوك الافتراضي ومنع انتشار الحدث لأعلى
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!user) {
         setShowAuthModal(true);
         return;
     }
-    const success = await favToggle(id);
+    await favToggle(id);
   };
 
-  const shareScholarship = (id, name, country) => {
+  const shareScholarship = (e, id, name, country) => {
+    e.preventDefault(); // 💡 منع القفز لأعلى الصفحة
     const url = `${window.location.origin}/scholarship/${id}`;
     if (navigator.share) {
       navigator.share({ title: `منحة ${name}`, text: `🎓 اكتشف منحة ${name} في ${country} على منصة مُلم!`, url });
@@ -77,26 +78,20 @@ const Scholarships = () => {
     ? [] 
     : scholarships.filter(s => favorites.includes(String(s.id)));
 
-  // كود Intersection Observer يبقى كما هو...
-  // ...
-
   const ScholarshipCard = ({ s }) => {
-    // تحويل الطرفين لنصوص لضمان دقة عمل اللون الأحمر للقلب
-    // تأكدنا الآن أن favorites ممتلئة بشكل صحيح قبل العرض
     const isFav = favorites.includes(String(s.id));
 
     return (
       <div className="card">
         <button
           className={`fav-btn ${isFav ? 'active' : ''}`}
-          aria-label={isFav ? 'إزالة من المفضلة' : 'إضافة للمفكلة'}
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleFav(s.id);
-          }}
+          aria-label={isFav ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}
+          onClick={(e) => toggleFav(e, s.id)} // 💡 تمرير الـ event لمنع الصعود
+          type="button"
         >
           <i className={`${isFav ? 'fa-solid' : 'fa-regular'} fa-heart`}></i>
         </button>
+        
         {s.flag && (s.flag.startsWith('http') || s.flag.includes('/') || s.flag.includes('.')) ? (
           <img className="card-flag" src={s.flag} alt="flag" />
         ) : (
@@ -111,11 +106,18 @@ const Scholarships = () => {
         <p className="desc">{s.description || ''}</p>
         {s.open_date && <p className="deadline">📅 موعد فتح التقديم: {s.open_date}</p>}
         <p className="deadline">📅 آخر موعد للتقديم: {s.deadline}</p>
+        
         <Link to={`/scholarship/${s.id}`} className="btn-details">تفاصيل المنحة كاملة ←</Link>
         <a href={s.link} target="_blank" rel="noreferrer">زيارة الموقع الرسمي ↗</a>
-        <a className="btn-details" onClick={() => shareScholarship(s.id, s.name, s.country)}>
+        
+        {/* 💡 تعديل: تحويل الرابط إلى button لمنع قفز الصفحة للأعلى */}
+        <button 
+          className="btn-details" 
+          onClick={(e) => shareScholarship(e, s.id, s.name, s.country)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'right', width: '100%' }}
+        >
           📤 شارك المنحة
-        </a>
+        </button>
       </div>
     );
   };
@@ -125,18 +127,19 @@ const Scholarships = () => {
       <div>
         <section className="page-hero">
           <h1>🎓 جميع المنح الدراسية</h1>
-          
           <p>اكتشف المنح المتاحة وتفاصيلها كاملة</p>
         </section>
 
         <div className="tabs">
           <button
+            type="button"
             className={`tab-btn ${activeTab === 'all' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('all')}
           >
             📋 جميع المنح
           </button>
           <button
+            type="button"
             className={`tab-btn ${activeTab === 'favorites' ? 'tab-active' : ''}`}
             onClick={() => setActiveTab('favorites')}
           >
@@ -147,7 +150,6 @@ const Scholarships = () => {
         {activeTab === 'all' && (
           <div id="all-section">
             <section className="filters">
-              {/* قسم الفلاتر يبقى كما هو */}
               <input
                 type="text"
                 placeholder="🔍 ابحث عن منحة..."
@@ -169,9 +171,7 @@ const Scholarships = () => {
 
             <section className="featured">
               <div className="grid">
-                {/* 🌟 التعديل: ننتظر تحميل المنح فقط (loadingScholarships) دون انتظار Firebase authLoading */}
                 {loadingScholarships ? (
-                  // عرض بطاقات Skeleton طالما يتم تحميل المنح
                   Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className="skeleton-card">
                       <div className="skeleton-line skeleton-flag"></div>
@@ -183,13 +183,11 @@ const Scholarships = () => {
                     </div>
                   ))
                 ) : (
-                  // عرض بطاقات المنح الفعلية بعد اكتمال تحميل المنح
                   filteredScholarships.map(s => (
                     <ScholarshipCard key={s.id} s={s} />
                   ))
                 )}
               </div>
-              {/* رسالة "لا توجد نتائج" تظهر فقط بعد انتهاء التحميل */}
               {!loadingScholarships && filteredScholarships.length === 0 && (
                 <p id="no-results">لا توجد منح تطابق بحثك 😔</p>
               )}
@@ -197,8 +195,6 @@ const Scholarships = () => {
           </div>
         )}
 
-        {/* بقية الـ activeTab === 'favorites' والـ showAuthModal تبقى كما هي... */}
-        {/* ... */}
          {activeTab === 'favorites' && (
           <div id="favorites-section">
             <section className="featured">
@@ -225,11 +221,8 @@ const Scholarships = () => {
         <button id="back-to-top" onClick={scrollToTop}>↑</button>
       )}
 
-      {showAuthModal && (
-        // تم إضافة شرط لإظهار المودال فقط إذا لم يكن المستخدم مسجلاً
-        !user && (
+      {showAuthModal && !user && (
           <div
-          // تم نسخ ستايل المودال الأصلي هنا للتأكد من عمله
           style={{
             position: 'fixed',
             top: 0,
@@ -350,7 +343,6 @@ const Scholarships = () => {
             </div>
           </div>
         </div>
-        )
       )}
     </div>
   );

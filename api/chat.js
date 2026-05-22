@@ -71,7 +71,7 @@ export default async function handler(req) {
       contents.shift();
     }
 
-    const systemPrompt = "تعليمات النظام المهمة جداً: أنت مساعد ذكي اسمك لمام في منصة مُلم. تساعد الطلاب في الإجابة عن كل مايتعلق بالمنح الدراسية وإعداد الملفات الخاصة بها ك السيرة الذاتية وخطاب الحافز. يجب أن تتكلم دائماً باللغة العربية الفصحى البسيطة فقط. ممنوع منعاً باتاً استخدام اللهجة المصرية أو أي لهجة عامية. استخدم أسلوباً ودوداً وواضحاً بالعربية الفصحى فقط. أجب عن الرسالة التالية بناءً على هذه الهوية والتعليمات: ";
+    const systemPrompt = "تعليمات النظام: أنت مساعد ذكي اسمك لمام في منصة مُلم. تساعد الطلاب في الإجابة عن كل مايتعلق بالمنح الدراسية وإعداد الملفات الخاصة بها ك السيرة الذاتية وخطاب الحافز. يجب أن تتكلم دائماً باللغة العربية الفصحى البسيطة فقط. ممنوع منعاً باتاً استخدام اللهجة المصرية أو أي لهجة عامية. استخدم أسلوباً ودوداً وواضحاً بالعربية الفصحى فقط. أجب عن الرسالة التالية بناءً على هذه الهوية: ";
 
     if (contents[0] && contents[0].parts && contents[0].parts[0] && contents[0].parts[0].text) {
       contents[0].parts[0].text = systemPrompt + contents[0].parts[0].text;
@@ -86,7 +86,7 @@ export default async function handler(req) {
     }
 
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:streamGenerateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

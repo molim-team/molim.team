@@ -61,10 +61,7 @@ export default async function handler(req) {
       .filter(Boolean);
 
     if (contents.length === 0) {
-      return new Response(JSON.stringify({ error: 'لا يوجد محتوى صالح في history' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
+      return new Response(JSON.stringify({ error: 'لا يوجد محتوى صالح' }), { status: 400, headers: corsHeaders });
     }
 
     if (contents[0].role === 'model') {
@@ -72,15 +69,11 @@ export default async function handler(req) {
     }
 
     if (!GEMINI_API_KEY) {
-      console.error('Missing GEMINI_API_KEY');
-      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY غير معرف في إعدادات السيرفر.' }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
+      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY غير معرف' }), { status: 500, headers: corsHeaders });
     }
 
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -101,15 +94,11 @@ export default async function handler(req) {
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
-      console.error('Gemini error:', errText);
-      return new Response(JSON.stringify({ error: 'خطأ أثناء الاتصال بـ Gemini API', details: errText }), {
-        status: 502,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
+      return new Response(JSON.stringify({ error: 'Gemini Error', details: errText }), { status: 502, headers: corsHeaders });
     }
 
     const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
+    const decoder = new TextDecoder('utf-8');
     const reader = geminiRes.body.getReader();
 
     const stream = new ReadableStream({
@@ -121,49 +110,30 @@ export default async function handler(req) {
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
-          
           let lines = buffer.split('\n');
           buffer = lines.pop() || '';
 
           for (let line of lines) {
-            let cleanedLine = line.trim();
-            if (!cleanedLine) continue;
-            if (cleanedLine.startsWith('data:')) {
-              cleanedLine = cleanedLine.substring(5).trim();
-            }
-            if (cleanedLine.startsWith(',')) {
-              cleanedLine = cleanedLine.substring(1).trim();
-            }
-
-            if (cleanedLine === '[DONE]' || cleanedLine === '[' || cleanedLine === ']') continue;
-
-            try {
-              const json = JSON.parse(cleanedLine);
-              const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (text) {
-                controller.enqueue(encoder.encode(text));
+            let cleaned = line.trim();
+            
+            if (cleaned.startsWith('data:')) {
+              cleaned = cleaned.substring(5).trim();
+              if (cleaned === '[DONE]') continue;
+              
+              try {
+                const json = JSON.parse(cleaned);
+                const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                  controller.enqueue(encoder.encode(text));
+                }
+              } catch (e) {
               }
-            } catch (e) {
             }
-          }
-        }
-
-        if (buffer.trim()) {
-          let finalLine = buffer.trim();
-          if (finalLine.startsWith('data:')) finalLine = finalLine.substring(5).trim();
-          if (finalLine.startsWith(',')) finalLine = finalLine.substring(1).trim();
-          
-          if (finalLine && finalLine !== '[DONE]' && finalLine !== ']') {
-            try {
-              const json = JSON.parse(finalLine);
-              const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-              if (text) controller.enqueue(encoder.encode(text));
-            } catch (e) {}
           }
         }
 
         controller.close();
-      },
+      }
     });
 
     return new Response(stream, {
@@ -177,9 +147,6 @@ export default async function handler(req) {
 
   } catch (error) {
     console.error('Server error:', error);
-    return new Response(JSON.stringify({ error: 'خطأ داخلي في السيرفر' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    });
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500, headers: corsHeaders });
   }
 }

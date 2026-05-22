@@ -5,7 +5,6 @@ export const config = {
 export default async function handler(req) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-  // إعدادات الـ CORS للـ Edge
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -33,7 +32,6 @@ export default async function handler(req) {
       });
     }
 
-    // تجهيز المصفوفة لـ Gemini
     const contents = history
       .map(m => {
         const role = m.role === 'assistant' ? 'model' : 'user';
@@ -82,7 +80,7 @@ export default async function handler(req) {
     }
 
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:streamGenerateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -124,17 +122,22 @@ export default async function handler(req) {
 
           buffer += decoder.decode(value, { stream: true });
           
-          // تقسيم الاستجابة بناءً على صيغة الـ SSE من جوجل
-          const parts = buffer.split('data:');
-          buffer = parts.pop() || '';
+          let jsonChunks = buffer.split(/[\r\n]+/);
+          buffer = jsonChunks.pop() || '';
 
-          for (const chunk of parts) {
-            const trimmed = chunk.trim();
-            if (!trimmed || trimmed === '[DONE]') continue;
+          for (const chunk of jsonChunks) {
+            let cleanedChunk = chunk.trim();
+            
+            if (cleanedChunk.startsWith('data:')) {
+              cleanedChunk = cleanedChunk.replace(/^data:\s*/, '');
+            }
+            
+            if (!cleanedChunk || cleanedChunk === '[DONE]') continue;
+            if (cleanedChunk.startsWith(',')) cleanedChunk = cleanedChunk.substring(1).trim();
+            if (cleanedChunk.startsWith('[') || cleanedChunk.startsWith(']')) continue;
 
             try {
-              const jsonStr = trimmed.startsWith('{') ? trimmed : trimmed.substring(trimmed.indexOf('{'));
-              const json = JSON.parse(jsonStr);
+              const json = JSON.parse(cleanedChunk);
               const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
               if (text) {
                 controller.enqueue(encoder.encode(text));
@@ -145,14 +148,16 @@ export default async function handler(req) {
         }
 
         if (buffer.trim()) {
-          try {
-            const trimmed = buffer.replace(/^data:\s*/, '').trim();
-            if (trimmed && trimmed !== '[DONE]') {
-              const json = JSON.parse(trimmed);
+          let finalChunk = buffer.trim().replace(/^data:\s*/, '');
+          if (finalChunk.startsWith(',')) finalChunk = finalChunk.substring(1).trim();
+          
+          if (finalChunk && finalChunk !== '[DONE]' && !finalChunk.startsWith(']')) {
+            try {
+              const json = JSON.parse(finalChunk);
               const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
               if (text) controller.enqueue(encoder.encode(text));
-            }
-          } catch (e) {}
+            } catch (e) {}
+          }
         }
 
         controller.close();

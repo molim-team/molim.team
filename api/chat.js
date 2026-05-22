@@ -1,8 +1,7 @@
-
-
 export default async function handler(req, res) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
   
+  // إعدادات الـ CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -58,13 +57,14 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'GEMINI_API_KEY غير معرف في إعدادات السيرفر.' });
     }
 
+    // إرسال الطلب إلى Gemini مع التأكد من صياغة النظام
     const geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=${GEMINI_API_KEY}&alt=sse`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          system_instruction: {
+          systemInstruction: {
             parts: [{
               text: 'أنت مساعد ذكي اسمك لمام في منصة مُلم. تساعد الطلاب في الإجابة عن كل مايتعلق بالمنح الدراسية وإعداد الملفات الخاصة بها ك السيرة الذاتية وخطاب الحافز. يجب أن تتكلم دائماً باللغة العربية الفصحى البسيطة فقط. ممنوع منعاً باتاً استخدام اللهجة المصرية أو أي لهجة عامية. استخدم أسلوباً ودوداً وواضحاً بالعربية الفصحى فقط.'
             }]
@@ -80,55 +80,46 @@ export default async function handler(req, res) {
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
-      console.error('Gemini error:', errText);
-      return res.status(502).json({ error: 'خطأ أثناء الاتصال بـ Gemini API' });
+      console.error('Gemini API Error Response:', errText); // هذا السطر سيطبع لك السبب الدقيق في الـ Terminal لو رفضت جوجل الطلب
+      return res.status(502).json({ error: 'خطأ أثناء الاتصال بـ Gemini API', details: errText });
     }
 
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
+    // إعداد ترويسات البث بشكل متوافق مع البيئة المحلية و Vercel
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
     res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders();
+    res.setHeader('X-Content-Type-Options', 'nosniff');
 
+    // قراءة الـ Stream بطريقة متوافقة عالمياً (Node.js Fetch + Web Stream)
+    const reader = geminiRes.body;
     let buffer = '';
 
-    geminiRes.body.on('data', (chunk) => {
-      buffer += chunk.toString();
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || !trimmed.startsWith('data:')) continue;
-
-        const jsonStr = trimmed.replace(/^data:\s*/, '');
-        if (jsonStr === '[DONE]') continue;
-
-        try {
-          const json = JSON.parse(jsonStr);
-          const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          if (text) res.write(text);
-        } catch (e) {}
+    // التحقق من الطريقة الأنسب للقراءة حسب إصدار البيئة التشغيلية
+    if (typeof reader.getReader === 'function') {
+      const webReader = reader.getReader();
+      const decoder = new TextDecoder();
+      
+      while (true) {
+        const { done, value } = await webReader.read();
+        if (done) break;
+        
+        buffer += decoder.decode(value, { stream: true });
+        buffer = processBuffer(buffer, res);
       }
-    });
-
-    geminiRes.body.on('end', () => {
-      if (buffer.trim().startsWith('data:')) {
-        const jsonStr = buffer.trim().replace(/^data:\s*/, '');
-        if (jsonStr && jsonStr !== '[DONE]') {
-          try {
-            const json = JSON.parse(jsonStr);
-            const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            if (text) res.write(text);
-          } catch (e) {}
-        }
+    } else {
+      // التعامل مع Streams التقليدية في بيئة Node المحلية القديمة
+      for await (const chunk of reader) {
+        buffer += chunk.toString();
+        buffer = processBuffer(buffer, res);
       }
-      res.end();
-    });
+    }
 
-    geminiRes.body.on('error', (err) => {
-      console.error('Stream error:', err);
-      if (!res.headersSent) res.status(500).end();
-    });
+    // معالجة أي بيانات متبقية
+    if (buffer.trim()) {
+      processLine(buffer.trim(), res);
+    }
+
+    res.end();
 
   } catch (error) {
     console.error('Server error:', error);
@@ -136,4 +127,33 @@ export default async function handler(req, res) {
       res.status(500).json({ error: 'خطأ داخلي في السيرفر' });
     }
   }
+}
+
+// دالة مساعدة لمعالجة كتل النصوص القادمة من البث
+function processBuffer(buffer, res) {
+  const lines = buffer.split('\n');
+  const remaining = lines.pop() || '';
+
+  for (const line of lines) {
+    processLine(line, res);
+  }
+  return remaining;
+}
+
+// دالة مساعدة لتحليل سطر الـ SSE واستخراج النص وإرساله فوراً للـ Frontend
+function processLine(line, res) {
+  const trimmed = line.trim();
+  if (!trimmed || !trimmed.startsWith('data:')) return;
+
+  const jsonStr = trimmed.replace(/^data:\s*/, '');
+  if (jsonStr === '[DONE]') return;
+
+  try {
+    const json = JSON.parse(jsonStr);
+    const text = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (text) {
+      res.write(text);
+      if (typeof res.flush === 'function') res.flush();
+    }
+  } catch (e) {}
 }

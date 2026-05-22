@@ -85,7 +85,7 @@ export default async function handler(req) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          systemInstruction: {
+          system_instruction: {
             parts: [{
               text: 'أنت مساعد ذكي اسمك لمام في منصة مُلم. تساعد الطلاب في الإجابة عن كل مايتعلق بالمنح الدراسية وإعداد الملفات الخاصة بها ك السيرة الذاتية وخطاب الحافز. يجب أن تتكلم دائماً باللغة العربية الفصحى البسيطة فقط. ممنوع منعاً باتاً استخدام اللهجة المصرية أو أي لهجة عامية. استخدم أسلوباً ودوداً وواضحاً بالعربية الفصحى فقط.'
             }]
@@ -133,6 +133,7 @@ export default async function handler(req) {
             }
             
             if (!cleanedChunk || cleanedChunk === '[DONE]') continue;
+            
             if (cleanedChunk.startsWith(',')) cleanedChunk = cleanedChunk.substring(1).trim();
             if (cleanedChunk.startsWith('[') || cleanedChunk.startsWith(']')) continue;
 
@@ -142,8 +143,7 @@ export default async function handler(req) {
               if (text) {
                 controller.enqueue(encoder.encode(text));
               }
-            } catch (e) {
-            }
+            } catch (e) {}
           }
         }
 

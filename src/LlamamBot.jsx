@@ -12,7 +12,6 @@ function LlamamBot() {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // 2. ترحيب البوت عند أول فتح
   const handleBotClick = () => {
     setIsOpen(!isOpen);
     if (!isOpen && messages.length === 0) {
@@ -26,7 +25,6 @@ function LlamamBot() {
     }
   };
 
-  // 3. تحويل الملفات لـ Base64
   const fileToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -43,7 +41,6 @@ function LlamamBot() {
     setFilePreview(`📎 ${file.name}`);
   };
 
-  // 4. إرسال الرسالة إلى الـ API المشغل للمام
   const handleSendMessage = async (textToSend = inputValue) => {
     const trimmedText = textToSend.trim();
     if (!trimmedText && !attachedFile) return;
@@ -55,13 +52,12 @@ function LlamamBot() {
     }
 
     const displayUserText = trimmedText || (attachedFile ? '📎 تم إرفاق ملف' : '');
-    
-    // إضافة رسالة المستخدم للشاشة
+
     const newMsgId = Date.now();
     setMessages(prev => [...prev, { id: newMsgId, sender: 'user', text: displayUserText }]);
     setInputValue('');
 
-    // تجهيز المحتوى للـ API
+    // تجهيز المحتوى وحقن الملفات إن وجدت
     let userContent;
     if (attachedFile) {
       try {
@@ -76,7 +72,6 @@ function LlamamBot() {
       } catch (err) {
         console.error("File conversion error:", err);
       }
-      // تصفية حقول الملفات بعد الإرسال
       setAttachedFile(null);
       setFilePreview('');
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -100,20 +95,62 @@ function LlamamBot() {
       setIsTyping(false);
 
       const reader = response.body.getReader();
-      const decoder = new TextDecoder();
+      const decoder = new TextDecoder('utf-8');
       let fullReply = '';
+      let buffer = '';
 
-      // إنشاء مكان لرسالة الـ AI المستلمة بالـ Stream
+
       const aiResponseId = Date.now() + '-ai';
       setMessages(prev => [...prev, { id: aiResponseId, sender: 'ai', text: '' }]);
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        fullReply += chunk;
 
-        // تحديث النص الحي (Streaming Update)
+        const chunk = decoder.decode(value, { stream: true });
+        
+        if (chunk.includes('"text":') || chunk.trim().startsWith('{') || chunk.trim().startsWith('data:')) {
+          buffer += chunk;
+          let lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (let line of lines) {
+            let cleaned = line.trim();
+            if (cleaned.startsWith('data:')) cleaned = cleaned.substring(5).trim();
+            if (cleaned.startsWith(',')) cleaned = cleaned.substring(1).trim();
+            if (!cleaned || cleaned === '[' || cleaned === ']' || cleaned === '[DONE]') continue;
+
+            try {
+              const parsed = JSON.parse(cleaned);
+              const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text || parsed.text || '';
+              if (textChunk) {
+                fullReply += textChunk;
+                setMessages(prev => prev.map(m => m.id === aiResponseId ? { ...m, text: fullReply } : m));
+              }
+            } catch (e) {
+              if (!cleaned.startsWith('{') && !cleaned.startsWith('[')) {
+                fullReply += line;
+                setMessages(prev => prev.map(m => m.id === aiResponseId ? { ...m, text: fullReply } : m));
+              }
+            }
+          }
+        } else {
+          fullReply += chunk;
+          setMessages(prev => prev.map(m => m.id === aiResponseId ? { ...m, text: fullReply } : m));
+        }
+      }
+
+      if (buffer.trim() && (buffer.includes('"text":') || buffer.trim().startsWith('{'))) {
+        try {
+          let cleaned = buffer.trim();
+          if (cleaned.startsWith('data:')) cleaned = cleaned.substring(5).trim();
+          if (cleaned.startsWith(',')) cleaned = cleaned.substring(1).trim();
+          const parsed = JSON.parse(cleaned);
+          const textChunk = parsed.candidates?.[0]?.content?.parts?.[0]?.text || parsed.text || '';
+          if (textChunk) fullReply += textChunk;
+        } catch (e) {
+          fullReply += buffer;
+        }
         setMessages(prev => prev.map(m => m.id === aiResponseId ? { ...m, text: fullReply } : m));
       }
 
@@ -130,7 +167,6 @@ function LlamamBot() {
     }
   };
 
-  // دحرجة الشات لأسفل تلقائياً مع الرسائل الجديدة
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
@@ -144,7 +180,7 @@ function LlamamBot() {
         🤖 لمام
       </button>
 
-      {/* صندوق المحادثة التفاعلي */}
+      {/* صندوق المحادثة التفاعلي المساعد */}
       {isOpen && (
         <div className="llamam-chat-box">
           <div className="llamam-header">

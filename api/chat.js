@@ -5,8 +5,9 @@ export const config = {
 export default async function handler(req) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
+  const allowedOrigin = '*'; 
   const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
@@ -16,20 +17,17 @@ export default async function handler(req) {
   }
 
   if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: corsHeaders });
   }
 
   try {
     const { history } = await req.json();
 
-    if (!history || !Array.isArray(history) || history.length === 0) {
-      return new Response(JSON.stringify({ error: 'history مطلوب ويجب أن يكون مصفوفة' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
+    if (!history || !Array.isArray(history)) {
+      return new Response(JSON.stringify({ error: 'بيانات غير صالحة' }), { status: 400, headers: corsHeaders });
+    }
+    if (history.length > 30) {
+      return new Response(JSON.stringify({ error: 'تم تجاوز الحد الأقصى لطول المحادثة' }), { status: 400, headers: corsHeaders });
     }
 
     let contents = history
@@ -69,7 +67,7 @@ export default async function handler(req) {
     }
 
     if (!GEMINI_API_KEY) {
-      return new Response(JSON.stringify({ error: 'GEMINI_API_KEY غير معرف' }), { status: 500, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: 'مفتاح API غير متوفر' }), { status: 500, headers: corsHeaders });
     }
 
     const geminiRes = await fetch(
@@ -86,15 +84,15 @@ export default async function handler(req) {
           contents,
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 8192
+            maxOutputTokens: 2048 
           }
         })
       }
     );
 
     if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      return new Response(JSON.stringify({ error: 'Gemini Error', details: errText }), { status: 502, headers: corsHeaders });
+      console.error('Gemini API Error', await geminiRes.text());
+      return new Response(JSON.stringify({ error: 'خطأ في الاتصال بالخادم الذكي' }), { status: 502, headers: corsHeaders });
     }
 
     const encoder = new TextEncoder();
@@ -105,23 +103,25 @@ export default async function handler(req) {
       async start(controller) {
         let buffer = '';
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-          buffer += decoder.decode(value, { stream: true });
-          let lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (let line of lines) {
-            let cleaned = line.trim();
+            buffer += decoder.decode(value, { stream: true });
             
-            if (cleaned.startsWith('data:')) {
-              cleaned = cleaned.substring(5).trim();
-              if (cleaned === '[DONE]') continue;
+            let eventEndIndex;
+            while ((eventEndIndex = buffer.indexOf('\n\n')) >= 0) {
+              const eventStr = buffer.slice(0, eventEndIndex).trim();
+              buffer = buffer.slice(eventEndIndex + 2);
+
+              if (!eventStr.startsWith('data:')) continue;
+              
+              const dataStr = eventStr.substring(5).trim();
+              if (dataStr === '[DONE]') continue;
               
               try {
-                const json = JSON.parse(cleaned);
+                const json = JSON.parse(dataStr);
                 const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (text) {
                   controller.enqueue(encoder.encode(text));
@@ -130,16 +130,17 @@ export default async function handler(req) {
               }
             }
           }
+        } catch (err) {
+          console.error('Stream processing error:', err);
+        } finally {
+          controller.close();
         }
-
-        controller.close();
       }
     });
 
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
-        'X-Content-Type-Options': 'nosniff',
         'Cache-Control': 'no-cache, no-transform',
         ...corsHeaders,
       },

@@ -71,12 +71,6 @@ export default async function handler(req) {
       contents.shift();
     }
 
-    const systemPrompt = "تعليمات النظام: أنت مساعد ذكي اسمك لمام في منصة مُلم. تساعد الطلاب في الإجابة عن كل مايتعلق بالمنح الدراسية وإعداد الملفات الخاصة بها ك السيرة الذاتية وخطاب الحافز. يجب أن تتكلم دائماً باللغة العربية الفصحى البسيطة فقط. ممنوع منعاً باتاً استخدام اللهجة المصرية أو أي لهجة عامية. استخدم أسلوباً ودوداً وواضحاً بالعربية الفصحى فقط. أجب عن الرسالة التالية بناءً على هذه الهوية: ";
-
-    if (contents[0] && contents[0].parts && contents[0].parts[0] && contents[0].parts[0].text) {
-      contents[0].parts[0].text = systemPrompt + contents[0].parts[0].text;
-    }
-
     if (!GEMINI_API_KEY) {
       console.error('Missing GEMINI_API_KEY');
       return new Response(JSON.stringify({ error: 'GEMINI_API_KEY غير معرف في إعدادات السيرفر.' }), {
@@ -84,13 +78,17 @@ export default async function handler(req) {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
     }
-
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:streamGenerateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          systemInstruction: {
+            parts: [{
+              text: 'أنت مساعد ذكي اسمك لمام في منصة مُلم. تساعد الطلاب في الإجابة عن كل مايتعلق بالمنح الدراسية وإعداد الملفات الخاصة بها ك السيرة الذاتية وخطاب الحافز. يجب أن تتكلم دائماً باللغة العربية الفصحى البسيطة فقط. ممنوع منعاً باتاً استخدام اللهجة المصرية أو أي لهجة عامية. استخدم أسلوباً ودوداً وواضحاً بالعربية الفصحى فقط.'
+            }]
+          },
           contents,
           generationConfig: {
             temperature: 0.7,

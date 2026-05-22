@@ -1024,5 +1024,36 @@
     "link": "https://daftar.umsu.ac.id/register",
     "open": true,
     "notes": ""
+  },
+  {
+    "id": "muhammadiyah-yogyakarta-scolarship",
+    "name": "منحة جامعة Muhammadiyah Yogyakarta",
+    "name_en": "Muhammadiyah Yogyakarta Scolarship",
+    "country": "إندونيسيا",
+    "flag": "https://flagcdn.com/w40/id.png",
+    "degree": "بكالوريوس، ماجستير، دكتوراه",
+    "language": "الإنجليزية",
+    "description": "منحة ممولة بالكامل مقدمة من جامعة المحمدية في يوغياكارتا",
+    "benefits": [
+      "تغطية الرسوم الدراسية، راتب شهري، سكن جامعي مجاني، دورة لتعلم اللغة الإندونيسية"
+    ],
+    "requirements": [],
+    "majors": [
+      "جميع الكليات متاحة باستثناء كلية الطب"
+    ],
+    "open_date": "2026-04-01",
+    "deadline": "2026-05-31",
+    "documents": {
+      "required": [
+        "شهادة التخرج مع كشف الدرجات",
+        "شهادة إثبات لغة إنجليزية بمستوى B1 للبكالوريوس و مستوى B2 للدراسات العليا",
+        "خطاب حافز",
+        "جواز سفر"
+      ],
+      "optional": []
+    },
+    "link": "https://intadmissions.umy.ac.id/login",
+    "open": true,
+    "notes": "يُعفى المتقدم من شهادة اللغة الإنجليزية في حال كانت دراستة السابقة باللغة الإنجليزية ويُطلب إثبات على ذلك"
   }
 ]

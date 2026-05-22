@@ -67,7 +67,6 @@ export default async function handler(req) {
       });
     }
 
-    // التأكد من عدم بدء المصفوفة برد من الموديل
     if (contents[0].role === 'model') {
       contents.shift();
     }
@@ -81,7 +80,7 @@ export default async function handler(req) {
     }
 
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

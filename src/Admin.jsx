@@ -513,7 +513,7 @@ function Admin() {
                 <input type="url" placeholder="https://t.me/..." value={editForm.groupLink} onChange={e => setEditForm({...editForm, groupLink: e.target.value})} />
               </div>
               <div className="form-group">
-                <label>💬 رابط قروب مناقشة المنحة</label>
+                <label>💬 رابط مناقشة المنحة</label>
                 <input type="url" placeholder="https://t.me/..." value={editForm.discussionLink} onChange={e => setEditForm({...editForm, discussionLink: e.target.value})} />
               </div>
             </div>

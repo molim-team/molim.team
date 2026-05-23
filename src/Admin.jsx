@@ -1,38 +1,31 @@
 import React, { useState } from 'react';
 
 function Admin() {
-  // إعدادات المستودع والثوابت
   const OWNER = 'molim-team';
   const REPO = 'molim.team';
   const FILE = 'public/scholarships.json';
 
-  // حالات لوحة التحكم (States)
   const [token, setToken] = useState('');
-  const [activeTab, setActiveTab] = useState('add'); // 'add' أو 'manage'
+  const [activeTab, setActiveTab] = useState('add');
   const [message, setMessage] = useState({ text: '', type: '' });
   const [editMessage, setEditMessage] = useState({ text: '', type: '' });
-  
-  // حالات تخزين البيانات القادمة من GitHub
   const [cachedSha, setCachedSha] = useState('');
   const [scholarships, setScholarships] = useState([]);
   const [loadingList, setLoadingList] = useState(false);
-
-  // حالات المودال والتعديل
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState(-1);
 
-  // هيكل البيانات الأساسي لنموذج المنحة (للإضافة والتعديل)
   const initialFormState = {
     title: '', enTitle: '', country: '', flag: '', degree: '', language: '',
     status: 'open', open_date: '', deadline: '', desc: '', notes: '', link: '',
     benefits: '', requirements: '', majors: '',
-    requiredFiles: [''], optionalFiles: [''] // مصفوفات ديناميكية تبدأ بحقل فارغ
+    groupLink: '', discussionLink: '',
+    requiredFiles: [''], optionalFiles: ['']
   };
 
   const [addForm, setAddForm] = useState(initialFormState);
   const [editForm, setEditForm] = useState(initialFormState);
 
-  // --- دوال مساعدة للتعامل مع الـ Base64 و UTF-8 العربي ---
   const toBase64 = (str) => {
     const bytes = new TextEncoder().encode(str);
     let binary = '';
@@ -46,7 +39,6 @@ function Admin() {
     return JSON.parse(new TextDecoder('utf-8').decode(bytes));
   };
 
-  // --- دوال ديناميكية لإدارة صفوف الملفات المضافة ---
   const handleFileTypeChange = (formType, fileType, index, value) => {
     const targetForm = formType === 'add' ? addForm : editForm;
     const setForm = formType === 'add' ? setAddForm : setEditForm;
@@ -68,7 +60,6 @@ function Admin() {
     setForm({ ...targetForm, [fileType]: updatedFiles });
   };
 
-  // --- الاتصال بـ GitHub API ---
   const fetchGitHubFile = async () => {
     const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FILE}`, {
       headers: { Authorization: `token ${token}` }
@@ -92,7 +83,6 @@ function Admin() {
     return result;
   };
 
-  // --- إضافة منحة جديدة ---
   const handleAddScholarship = async () => {
     setMessage({ text: '⏳ جاري الإضافة...', type: 'info' });
 
@@ -125,23 +115,23 @@ function Admin() {
       },
       link: addForm.link.trim(),
       open: addForm.status === 'open',
-      notes: addForm.notes.trim()
+      notes: addForm.notes.trim(),
+      groupLink: addForm.groupLink.trim(),
+      discussionLink: addForm.discussionLink.trim()
     };
 
     try {
       const fileData = await fetchGitHubFile();
       const currentList = decodeContent(fileData.content);
       currentList.push(newEntry);
-
       await saveGitHubFile(fileData.sha, currentList, `إضافة منحة: ${newEntry.name}`);
       setMessage({ text: '✅ تمت إضافة المنحة بنجاح! ستظهر على الموقع خلال دقائق.', type: 'success' });
-      setAddForm(initialFormState); // تصفير الفورم بعد النجاح
+      setAddForm(initialFormState);
     } catch (e) {
       setMessage({ text: `❌ حدث خطأ: ${e.message}`, type: 'error' });
     }
   };
 
-  // --- تحميل وإدارة المنح المخزنة ---
   const handleLoadScholarships = async () => {
     setLoadingList(true);
     setMessage({ text: '', type: '' });
@@ -157,25 +147,21 @@ function Admin() {
     }
   };
 
-  // --- حذف منحة ---
   const handleDeleteScholarship = async (index) => {
     if (!window.confirm('هل أنت متأكد من حذف هذه المنحة نهائياً؟')) return;
     try {
       const targetList = [...scholarships];
       const targetTitle = targetList[index].name || targetList[index].title;
       targetList.splice(index, 1);
-
-      // نأخذ الـ SHA الأحدث مباشرة لحذف آمن دون تعارضات
       const fileData = await fetchGitHubFile();
       await saveGitHubFile(fileData.sha, targetList, `حذف منحة: ${targetTitle}`);
       alert('✅ تم الحذف بنجاح من الخادم!');
-      handleLoadScholarships(); // إعادة تحميل
+      handleLoadScholarships();
     } catch (e) {
       alert(`❌ فشل الحذف: ${e.message}`);
     }
   };
 
-  // --- فتح مودال التعديل وتجهيز بياناته ---
   const handleOpenEditModal = (index) => {
     const s = scholarships[index];
     setEditingIndex(index);
@@ -197,6 +183,8 @@ function Admin() {
       majors: Array.isArray(s.majors) ? s.majors.join(', ') : s.majors || '',
       link: s.link || '',
       notes: s.notes || '',
+      groupLink: s.groupLink || '',
+      discussionLink: s.discussionLink || '',
       requiredFiles: s.documents?.required?.length ? s.documents.required : [''],
       optionalFiles: s.documents?.optional?.length ? s.documents.optional : ['']
     });
@@ -204,7 +192,6 @@ function Admin() {
     setIsModalOpen(true);
   };
 
-  // --- حفظ التعديلات المرسلة ---
   const handleSaveEdit = async () => {
     setEditMessage({ text: '⏳ جاري حفظ التعديلات...', type: 'info' });
 
@@ -237,7 +224,9 @@ function Admin() {
         },
         link: editForm.link.trim(),
         open: editForm.status === 'open',
-        notes: editForm.notes.trim()
+        notes: editForm.notes.trim(),
+        groupLink: editForm.groupLink.trim(),
+        discussionLink: editForm.discussionLink.trim()
       };
 
       const fileData = await fetchGitHubFile();
@@ -258,7 +247,6 @@ function Admin() {
     <div className="admin-container">
       <h1>🎛️ لوحة تحكم مُلم</h1>
 
-      {/* حقل التوكن المشترك لكافة العمليات */}
       <div className="token-bar">
         <label>🔑 التوكن الخاص بـ GitHub (مطلوب للتحقق)</label>
         <input 
@@ -269,7 +257,6 @@ function Admin() {
         />
       </div>
 
-      {/* التبويبات */}
       <div className="tabs">
         <button 
           className={`tab-btn ${activeTab === 'add' ? 'active' : 'inactive'}`} 
@@ -285,7 +272,6 @@ function Admin() {
         </button>
       </div>
 
-      {/* رسائل التغذية الراجعة العامة */}
       {message.text && <p className={`admin-msg ${message.type}`}>{message.text}</p>}
 
       {/* ================= تبويب الإضافة ================= */}
@@ -347,7 +333,6 @@ function Admin() {
             <input type="text" placeholder="مثال: هندسة برمجيات, ذكاء اصطناعي, هندسة حاسوب" value={addForm.majors} onChange={e => setAddForm({...addForm, majors: e.target.value})} />
           </div>
 
-          {/* الملفات الإلزامية والاختيارية */}
           <div className="files-section">
             <h4>📂 المستندات والملفات المطلوبة</h4>
             <p className="sub-title-file">📌 الملفات الإجبارية</p>
@@ -375,6 +360,20 @@ function Admin() {
             <label>رابط التتقديم للموقع الرسمي</label>
             <input type="url" placeholder="https://..." value={addForm.link} onChange={e => setAddForm({...addForm, link: e.target.value})} />
           </div>
+
+          {/* روابط مجموعات Telegram */}
+          <div className="files-section">
+            <h4>📣 روابط مجموعات Telegram</h4>
+            <div className="form-group">
+              <label>🔗 رابط قروب المنحة</label>
+              <input type="url" placeholder="https://t.me/..." value={addForm.groupLink} onChange={e => setAddForm({...addForm, groupLink: e.target.value})} />
+            </div>
+            <div className="form-group">
+              <label>💬 رابط قروب مناقشة المنحة</label>
+              <input type="url" placeholder="https://t.me/..." value={addForm.discussionLink} onChange={e => setAddForm({...addForm, discussionLink: e.target.value})} />
+            </div>
+          </div>
+
           <div className="form-group">
             <label>📝 تفاصيل أو ملاحظات إضافية</label>
             <textarea placeholder="أي شروحات دقيقة تظهر بداخل صفحة التفاصيل المفردة..." value={addForm.notes} onChange={e => setAddForm({...addForm, notes: e.target.value})}></textarea>
@@ -478,7 +477,6 @@ function Admin() {
               <input type="text" value={editForm.majors} onChange={e => setEditForm({...editForm, majors: e.target.value})} />
             </div>
 
-            {/* تعديل المستندات داخل المودال */}
             <div className="files-section">
               <h4>📂 تعديل المستندات</h4>
               <p className="sub-title-file">📌 الملفات الإجبارية</p>
@@ -506,6 +504,20 @@ function Admin() {
               <label>رابط التقديم الرسمي</label>
               <input type="url" value={editForm.link} onChange={e => setEditForm({...editForm, link: e.target.value})} />
             </div>
+
+            {/* تعديل روابط مجموعات Telegram */}
+            <div className="files-section">
+              <h4>📣 روابط مجموعات Telegram</h4>
+              <div className="form-group">
+                <label>🔗 رابط قروب المنحة</label>
+                <input type="url" placeholder="https://t.me/..." value={editForm.groupLink} onChange={e => setEditForm({...editForm, groupLink: e.target.value})} />
+              </div>
+              <div className="form-group">
+                <label>💬 رابط قروب مناقشة المنحة</label>
+                <input type="url" placeholder="https://t.me/..." value={editForm.discussionLink} onChange={e => setEditForm({...editForm, discussionLink: e.target.value})} />
+              </div>
+            </div>
+
             <div className="form-group">
               <label>📝 تفاصيل إضافية</label>
               <textarea value={editForm.notes} onChange={e => setEditForm({...editForm, notes: e.target.value})}></textarea>

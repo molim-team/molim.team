@@ -161,7 +161,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/quiz" element={<Quiz />} />
-            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/amr/aseal" element={<Admin />} />
             <Route path="/major" element={<Major />} />
             <Route path="/major/:id" element={<Major />} />
           </Routes>

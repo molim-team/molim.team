@@ -108,16 +108,19 @@ const Scholarships = () => {
         <p className="deadline">📅 آخر موعد للتقديم: {s.deadline}</p>
         
         <Link to={`/scholarship/${s.id}`} className="btn-details">تفاصيل المنحة كاملة ←</Link>
-        <a href={s.link} target="_blank" rel="noreferrer">زيارة الموقع الرسمي ↗</a>
+        <a href={s.link} target="_blank" rel="noreferrer" className="btn-details">زيارة الموقع الرسمي ↗</a>
+        <a 
+         href="#" 
+         className="btn-details" 
+         onClick={(e) => {
+         e.preventDefault(); 
+         shareScholarship(e, s.id, s.name, s.country); 
+  }}
+>
+  شارك المنحة
+</a>
         
-        {/* 💡 تعديل: تحويل الرابط إلى button لمنع قفز الصفحة للأعلى */}
-        <button 
-          className="btn-details" 
-          onClick={(e) => shareScholarship(e, s.id, s.name, s.country)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'right', width: '100%' }}
-        >
-          📤 شارك المنحة
-        </button>
+        {/*  تعديل: تحويل الرابط إلى button لمنع قفز الصفحة للأعلى */}
       </div>
     );
   };

@@ -350,17 +350,9 @@ nav a:hover {
   transition: transform 0.3s, border-color 0.3s, background 0.5s ease, color 0.5s ease;
 }
 
-
-
-
-
 #open-scholarships-grid .card {
   opacity: 1 !important;
 }
-
-
-
-
 
 .card:hover {
   transform: translateY(-5px);
@@ -380,16 +372,6 @@ nav a:hover {
   color: var(--primary-color);
   transition: color 0.5s ease;
 }
-
-
-
-
-
-
-
-
-
-
 
 .card .country {
   color: var(--secondary-color);

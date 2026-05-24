@@ -177,7 +177,7 @@ function Quiz() {
           <span className="intro-icon">🧭</span>
           <h1>اكتشف تخصصك المثالي بعمق</h1>
           <p>
-            عشرون سؤالاً نفسياً وعملياً متطوراً — لا تقيس فقط ما تحبه، بل كيف تفكر تحت الضغط، وكيف تتخذ القرارات، وما الذي يجذب انتباهك. 
+            عشرون سؤالاً نفسياً وعملياً — لا تقيس فقط ما تحبه، بل كيف تفكر تحت الضغط، وكيف تتخذ القرارات، وما الذي يجذب انتباهك. 
             يمكنك اختيار إجابة أو إجابتين تعكسان طبيعتك الحقيقية.
           </p>
           <div className="intro-features">
@@ -185,7 +185,6 @@ function Quiz() {
             <div className="intro-feature">🧠 أبعاد نفسية وعلمية</div>
             <div className="intro-feature">☑️ اختر حتى إجابتين</div>
             <div className="intro-feature">📊 تحليل منطقي متوازن</div>
-            <div className="intro-feature">🎓 أكثر من ٣٥ تخصصاً</div>
           </div>
           <button className="btn-primary" onClick={startQuiz}>ابدأ الاختبار</button>
         </div>

@@ -126,7 +126,7 @@ export default async function handler(req) {
       });
     }
 
-    //  خوارزمية فك تشفير البث القوية (تعالج الفواصل المعقدة ولا تترك رسائل فارغة)
+   
     const encoder = new TextEncoder();
     const decoder = new TextDecoder('utf-8');
     const reader = geminiRes.body.getReader();
@@ -141,7 +141,6 @@ export default async function handler(req) {
 
             buffer += decoder.decode(value, { stream: true });
             
-            // Regex للبحث عن نهايات الأسطر المزدوجة بدقة تامة
             const boundaryRegex = /(?:\r?\n){2}/g;
             let match;
             let lastIndex = 0;
@@ -165,7 +164,6 @@ export default async function handler(req) {
                 }
               }
             }
-            // الاحتفاظ بالبيانات غير المكتملة للدورة القادمة
             buffer = buffer.slice(lastIndex);
           }
         } catch (err) {

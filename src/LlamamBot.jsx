@@ -171,7 +171,7 @@ function LlamamBot() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  const quickQuestions = ['كيف أكتب خطاب حافز قوي', 'كيف أكتب CV قوي', 'ساعدني أختار المنحة المناسبة'];
+  const quickQuestions = ['كيف أكتب خطاب حافز قوي', 'كيف اكتب سيرة ذاتية بشكل ممتاز', 'كيف أختار المنحة المناسبة'];
 
   return (
     <>

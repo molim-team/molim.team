@@ -770,13 +770,13 @@ footer p {
 .about-card h3 {
   font-size: 20px;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--admin-tab-btn-active-bg);
   margin-bottom: 12px;
   transition: color 0.5s ease;
 }
 
 .about-card p {
-  color: var(--text-color);
+  color: var(--secondary-color);
   line-height: 1.8;
   font-size: 15px;
   transition: color 0.5s ease;
@@ -1531,7 +1531,7 @@ footer p {
 
 .major-text {
   font-size: 1rem;
-  color: var(--text-color);
+  color: var(--secondary-color);
   opacity: 0.9;
   margin-bottom: 15px;
   text-align: justify;
@@ -1547,7 +1547,7 @@ footer p {
   position: relative;
   padding-right: 25px;
   margin-bottom: 8px;
-  color: var(--text-color);
+  color: var(--secondary-color);
 }
 
 .major-list li::before {
@@ -2764,6 +2764,7 @@ footer p {
   line-height: 1.8;
   overflow: hidden;
   min-height: 0;
+  color: var(--secondary-color);
 }
 
 /* تحسين شكل رأس التخصص عند الفتح */

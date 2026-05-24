@@ -2,15 +2,30 @@ export const config = {
   runtime: 'edge',
 };
 
+
+const rateLimitMap = new Map();
+
 export default async function handler(req) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-  const allowedOrigin = '*'; 
+  const origin = req.headers.get('origin') || '';
+  const allowedOrigins = [
+    'https://molim.team', 
+    'https://www.molim.team', 
+    'http://localhost:5173' 
+  ];
+  
+  const isAllowedOrigin = allowedOrigins.includes(origin);
   const corsHeaders = {
-    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Origin': isAllowedOrigin ? origin : 'https://molim.team',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
   };
+
+  // إذا كان الطلب من موقع غريب، ارفضه فوراً
+  if (!isAllowedOrigin && origin !== '') {
+    return new Response(JSON.stringify({ error: 'Unauthorized Access' }), { status: 403, headers: corsHeaders });
+  }
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 200, headers: corsHeaders });
@@ -18,6 +33,31 @@ export default async function handler(req) {
 
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: corsHeaders });
+  }
+
+  // 2. نظام الحماية الثاني (Rate Limiting): منع إغراق السيرفر بالطلبات
+  const ip = req.headers.get('x-forwarded-for') || 'unknown';
+  if (ip !== 'unknown') {
+    const now = Date.now();
+    const windowMs = 60 * 1000; // دقيقة واحدة
+    const maxRequests = 10; // الحد الأقصى: 10 رسائل في الدقيقة لكل مستخدم
+
+    const userRecord = rateLimitMap.get(ip) || { count: 0, startTime: now };
+    
+    if (now - userRecord.startTime > windowMs) {
+      // تصفير العداد إذا مرت دقيقة
+      userRecord.count = 1;
+      userRecord.startTime = now;
+    } else {
+      userRecord.count++;
+      if (userRecord.count > maxRequests) {
+        return new Response(JSON.stringify({ error: 'تم تجاوز الحد المسموح من الرسائل. يرجى الانتظار قليلاً.' }), {
+          status: 429, // Too Many Requests
+          headers: corsHeaders
+        });
+      }
+    }
+    rateLimitMap.set(ip, userRecord);
   }
 
   try {
@@ -61,19 +101,15 @@ export default async function handler(req) {
     if (contents.length === 0) {
       return new Response(JSON.stringify({ error: 'لا يوجد محتوى صالح' }), { status: 400, headers: corsHeaders });
     }
-
-    // إصلاح ترتيب الأدوار: يجب أن تبدأ المحادثة دائماً بـ user
     if (contents[0].role === 'model') {
       contents.shift();
     }
 
-    // مصفاة إضافية آمنة لمنع تكرار دورين متتاليين من نفس النوع (مثلاً user ثم user) مما يكسر الـ API
     const validatedContents = [];
     for (let i = 0; i < contents.length; i++) {
       if (validatedContents.length === 0 || validatedContents[validatedContents.length - 1].role !== contents[i].role) {
         validatedContents.push(contents[i]);
       } else {
-        // إذا تكرر نفس الدور (مثلاً رسالتين مستخدم متتاليتين)، ندمج النصوص في رسالة واحدة لضمان التناوب الصارم
         const lastParts = validatedContents[validatedContents.length - 1].parts;
         validatedContents[validatedContents.length - 1].parts = lastParts.concat(contents[i].parts);
       }
@@ -88,7 +124,7 @@ export default async function handler(req) {
     }
 
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -107,14 +143,8 @@ export default async function handler(req) {
       }
     );
 
-    // إصلاح الثغرة: قراءة نص الخطأ بشكل آمن وتمريره للمتصفح دون التسبب في انهيار صامت (Crash) للـ Edge Runtime
     if (!geminiRes.ok) {
-      let errorDetails = 'Unknown error';
-      try {
-        errorDetails = await geminiRes.text();
-      } catch (e) {
-        errorDetails = 'Could not read error text';
-      }
+      const errorDetails = await geminiRes.text();
       console.error('Gemini API Error:', errorDetails);
       return new Response(JSON.stringify({ error: 'خطأ في الاتصال بالخادم الذكي', details: errorDetails }), { 
         status: 502, 
@@ -122,44 +152,18 @@ export default async function handler(req) {
       });
     }
 
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder('utf-8');
-    const reader = geminiRes.body.getReader();
+    
+    const responseData = await geminiRes.json();
+    const botReplyText = responseData.candidates?.[0]?.content?.parts?.[0]?.text || "عذراً، لم أتمكن من معالجة الرد.";
 
+    const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
-        let buffer = '';
-
         try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            
-            let eventEndIndex;
-            while ((eventEndIndex = buffer.indexOf('\n\n')) >= 0) {
-              const eventStr = buffer.slice(0, eventEndIndex).trim();
-              buffer = buffer.slice(eventEndIndex + 2);
-
-              if (!eventStr.startsWith('data:')) continue;
-              
-              const dataStr = eventStr.substring(5).trim();
-              if (dataStr === '[DONE]') continue;
-              
-              try {
-                const json = JSON.parse(dataStr);
-                const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (text) {
-                  controller.enqueue(encoder.encode(text));
-                }
-              } catch (e) {
-                // تجاهل أخطاء الـ parse لأسطر الـ Stream غير المكتملة
-              }
-            }
-          }
+          // إرسال النص الصافي كاملاً
+          controller.enqueue(encoder.encode(botReplyText));
         } catch (err) {
-          console.error('Stream processing error:', err);
+          console.error('Stream simulation error:', err);
         } finally {
           controller.close();
         }

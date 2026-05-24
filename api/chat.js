@@ -2,17 +2,17 @@ export const config = {
   runtime: 'edge',
 };
 
-
 const rateLimitMap = new Map();
 
 export default async function handler(req) {
   const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
+  // 1. نظام حماية CORS
   const origin = req.headers.get('origin') || '';
   const allowedOrigins = [
     'https://molim.team', 
     'https://www.molim.team', 
-    'http://localhost:5173' 
+    'http://localhost:5173'
   ];
   
   const isAllowedOrigin = allowedOrigins.includes(origin);
@@ -22,7 +22,6 @@ export default async function handler(req) {
     'Access-Control-Allow-Headers': 'Content-Type',
   };
 
-  // إذا كان الطلب من موقع غريب، ارفضه فوراً
   if (!isAllowedOrigin && origin !== '') {
     return new Response(JSON.stringify({ error: 'Unauthorized Access' }), { status: 403, headers: corsHeaders });
   }
@@ -35,24 +34,23 @@ export default async function handler(req) {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: corsHeaders });
   }
 
-  // 2. نظام الحماية الثاني (Rate Limiting): منع إغراق السيرفر بالطلبات
+  // 2. نظام الحماية من السبام (Rate Limiting)
   const ip = req.headers.get('x-forwarded-for') || 'unknown';
   if (ip !== 'unknown') {
     const now = Date.now();
-    const windowMs = 60 * 1000; // دقيقة واحدة
-    const maxRequests = 10; // الحد الأقصى: 10 رسائل في الدقيقة لكل مستخدم
+    const windowMs = 60 * 1000; 
+    const maxRequests = 15; 
 
     const userRecord = rateLimitMap.get(ip) || { count: 0, startTime: now };
     
     if (now - userRecord.startTime > windowMs) {
-      // تصفير العداد إذا مرت دقيقة
       userRecord.count = 1;
       userRecord.startTime = now;
     } else {
       userRecord.count++;
       if (userRecord.count > maxRequests) {
-        return new Response(JSON.stringify({ error: 'تم تجاوز الحد المسموح من الرسائل. يرجى الانتظار قليلاً.' }), {
-          status: 429, // Too Many Requests
+        return new Response(JSON.stringify({ error: 'الرجاء الانتظار قليلاً قبل إرسال المزيد من الرسائل.' }), {
+          status: 429, 
           headers: corsHeaders
         });
       }
@@ -63,37 +61,16 @@ export default async function handler(req) {
   try {
     const { history } = await req.json();
 
-    if (!history || !Array.isArray(history)) {
+    if (!history || !Array.isArray(history) || history.length === 0) {
       return new Response(JSON.stringify({ error: 'بيانات غير صالحة' }), { status: 400, headers: corsHeaders });
-    }
-    if (history.length > 30) {
-      return new Response(JSON.stringify({ error: 'تم تجاوز الحد الأقصى لطول المحادثة' }), { status: 400, headers: corsHeaders });
     }
 
     let contents = history
       .map(m => {
         const role = m.role === 'assistant' ? 'model' : 'user';
-
-        if (Array.isArray(m.content)) {
-          const parts = m.content.map(item => {
-            if (item.type === 'text') return { text: item.text };
-            if (item.type === 'image' && item.source?.type === 'base64') {
-              return { inlineData: { mimeType: item.source.media_type, data: item.source.data } };
-            }
-            if (item.type === 'document' && item.source?.type === 'base64') {
-              return { inlineData: { mimeType: 'application/pdf', data: item.source.data } };
-            }
-            return null;
-          }).filter(Boolean);
-
-          if (parts.length === 0) return null;
-          return { role, parts };
-        }
-
         if (typeof m.content === 'string' && m.content.trim()) {
           return { role, parts: [{ text: m.content }] };
         }
-
         return null;
       })
       .filter(Boolean);
@@ -101,6 +78,8 @@ export default async function handler(req) {
     if (contents.length === 0) {
       return new Response(JSON.stringify({ error: 'لا يوجد محتوى صالح' }), { status: 400, headers: corsHeaders });
     }
+
+ 
     if (contents[0].role === 'model') {
       contents.shift();
     }
@@ -115,29 +94,25 @@ export default async function handler(req) {
       }
     }
 
-    if (validatedContents.length === 0) {
-      return new Response(JSON.stringify({ error: 'لا يوجد محتوى صالح بعد الفحص' }), { status: 400, headers: corsHeaders });
-    }
-
     if (!GEMINI_API_KEY) {
       return new Response(JSON.stringify({ error: 'مفتاح API غير متوفر' }), { status: 500, headers: corsHeaders });
     }
 
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           systemInstruction: {
             parts: [{
-              text: 'أنت مساعد ذكي اسمك لمام في منصة مُلم. تساعد الطلاب في الإجابة عن كل مايتعلق بالمنح الدراسية وإعداد الملفات الخاصة بها ك السيرة الذاتية وخطاب الحافز. يجب أن تتكلم دائماً باللغة العربية الفصحى البسيطة فقط. ممنوع منعاً باتاً استخدام اللهجة المصرية أو أي لهجة عامية. استخدم أسلوباً ودوداً وواضحاً بالعربية الفصحى فقط.'
+              text: 'أنت مساعد ذكي اسمك لمام في منصة مُلم. تساعد الطلاب في الإجابة عن كل مايتعلق بالمنح الدراسية وإعداد الملفات الخاصة بها كالسيرة الذاتية وخطاب الحافز. يجب أن تتحدث دائماً باللغة العربية الفصحى البسيطة فقط. استخدم أسلوباً ودوداً وواضحاً، وتجنب الإجابات المقطوعة.'
             }]
           },
           contents: validatedContents,
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 2048 
+            maxOutputTokens: 4096 
           }
         })
       }
@@ -145,25 +120,56 @@ export default async function handler(req) {
 
     if (!geminiRes.ok) {
       const errorDetails = await geminiRes.text();
-      console.error('Gemini API Error:', errorDetails);
       return new Response(JSON.stringify({ error: 'خطأ في الاتصال بالخادم الذكي', details: errorDetails }), { 
         status: 502, 
         headers: { 'Content-Type': 'application/json', ...corsHeaders } 
       });
     }
 
-    
-    const responseData = await geminiRes.json();
-    const botReplyText = responseData.candidates?.[0]?.content?.parts?.[0]?.text || "عذراً، لم أتمكن من معالجة الرد.";
-
+    //  خوارزمية فك تشفير البث القوية (تعالج الفواصل المعقدة ولا تترك رسائل فارغة)
     const encoder = new TextEncoder();
+    const decoder = new TextDecoder('utf-8');
+    const reader = geminiRes.body.getReader();
+
     const stream = new ReadableStream({
       async start(controller) {
+        let buffer = '';
         try {
-          // إرسال النص الصافي كاملاً
-          controller.enqueue(encoder.encode(botReplyText));
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            
+            // Regex للبحث عن نهايات الأسطر المزدوجة بدقة تامة
+            const boundaryRegex = /(?:\r?\n){2}/g;
+            let match;
+            let lastIndex = 0;
+
+            while ((match = boundaryRegex.exec(buffer)) !== null) {
+              const chunk = buffer.slice(lastIndex, match.index);
+              lastIndex = match.index + match[0].length;
+
+              const trimmedChunk = chunk.trim();
+              if (trimmedChunk.startsWith('data:')) {
+                const dataStr = trimmedChunk.slice(5).trim();
+                if (dataStr !== '[DONE]') {
+                  try {
+                    const json = JSON.parse(dataStr);
+                    const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (text) {
+                      controller.enqueue(encoder.encode(text));
+                    }
+                  } catch (e) {
+                  }
+                }
+              }
+            }
+            // الاحتفاظ بالبيانات غير المكتملة للدورة القادمة
+            buffer = buffer.slice(lastIndex);
+          }
         } catch (err) {
-          console.error('Stream simulation error:', err);
+          console.error('Stream processing error:', err);
         } finally {
           controller.close();
         }

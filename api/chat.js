@@ -62,8 +62,25 @@ export default async function handler(req) {
       return new Response(JSON.stringify({ error: 'لا يوجد محتوى صالح' }), { status: 400, headers: corsHeaders });
     }
 
+    // إصلاح ترتيب الأدوار: يجب أن تبدأ المحادثة دائماً بـ user
     if (contents[0].role === 'model') {
       contents.shift();
+    }
+
+    // مصفاة إضافية آمنة لمنع تكرار دورين متتاليين من نفس النوع (مثلاً user ثم user) مما يكسر الـ API
+    const validatedContents = [];
+    for (let i = 0; i < contents.length; i++) {
+      if (validatedContents.length === 0 || validatedContents[validatedContents.length - 1].role !== contents[i].role) {
+        validatedContents.push(contents[i]);
+      } else {
+        // إذا تكرر نفس الدور (مثلاً رسالتين مستخدم متتاليتين)، ندمج النصوص في رسالة واحدة لضمان التناوب الصارم
+        const lastParts = validatedContents[validatedContents.length - 1].parts;
+        validatedContents[validatedContents.length - 1].parts = lastParts.concat(contents[i].parts);
+      }
+    }
+
+    if (validatedContents.length === 0) {
+      return new Response(JSON.stringify({ error: 'لا يوجد محتوى صالح بعد الفحص' }), { status: 400, headers: corsHeaders });
     }
 
     if (!GEMINI_API_KEY) {
@@ -81,7 +98,7 @@ export default async function handler(req) {
               text: 'أنت مساعد ذكي اسمك لمام في منصة مُلم. تساعد الطلاب في الإجابة عن كل مايتعلق بالمنح الدراسية وإعداد الملفات الخاصة بها ك السيرة الذاتية وخطاب الحافز. يجب أن تتكلم دائماً باللغة العربية الفصحى البسيطة فقط. ممنوع منعاً باتاً استخدام اللهجة المصرية أو أي لهجة عامية. استخدم أسلوباً ودوداً وواضحاً بالعربية الفصحى فقط.'
             }]
           },
-          contents,
+          contents: validatedContents,
           generationConfig: {
             temperature: 0.7,
             maxOutputTokens: 2048 
@@ -90,9 +107,19 @@ export default async function handler(req) {
       }
     );
 
+    // إصلاح الثغرة: قراءة نص الخطأ بشكل آمن وتمريره للمتصفح دون التسبب في انهيار صامت (Crash) للـ Edge Runtime
     if (!geminiRes.ok) {
-      console.error('Gemini API Error', await geminiRes.text());
-      return new Response(JSON.stringify({ error: 'خطأ في الاتصال بالخادم الذكي' }), { status: 502, headers: corsHeaders });
+      let errorDetails = 'Unknown error';
+      try {
+        errorDetails = await geminiRes.text();
+      } catch (e) {
+        errorDetails = 'Could not read error text';
+      }
+      console.error('Gemini API Error:', errorDetails);
+      return new Response(JSON.stringify({ error: 'خطأ في الاتصال بالخادم الذكي', details: errorDetails }), { 
+        status: 502, 
+        headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+      });
     }
 
     const encoder = new TextEncoder();
@@ -127,6 +154,7 @@ export default async function handler(req) {
                   controller.enqueue(encoder.encode(text));
                 }
               } catch (e) {
+                // تجاهل أخطاء الـ parse لأسطر الـ Stream غير المكتملة
               }
             }
           }

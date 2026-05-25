@@ -940,7 +940,9 @@
     },
     "link": "https://student.skoltech.ru/#apply",
     "open": true,
-    "notes": ""
+    "notes": "",
+    "groupLink": "https://t.me/T2026R",
+    "discussionLink": "https://t.me/sc2026hh"
   },
   {
     "id": "mat",

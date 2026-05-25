@@ -859,8 +859,10 @@
       ]
     },
     "link": "https://www.vladnestipendia.sk/en/",
-    "open": true,
-    "notes": "الدول العربية المتاح التقديم لها : العراق الاردن السودان سوريا فلسطين لبنان تونس اثيوبيا"
+    "open": false,
+    "notes": "الدول العربية المتاح التقديم لها : العراق الاردن السودان سوريا فلسطين لبنان تونس اثيوبيا",
+    "groupLink": "https://t.me/T2026R",
+    "discussionLink": "https://t.me/sc2026hh"
   },
   {
     "id": "sabanci-university-scholarship",

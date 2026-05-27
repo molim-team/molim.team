@@ -8,7 +8,7 @@ const FavoritesContext = createContext();
 export function FavoritesProvider({ children }) {
   const [favorites, setFavorites] = useState([]);
   const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true); 
+  const [authLoading, setAuthLoading] = useState(true);
   const favoritesRef = useRef([]);
 
   useEffect(() => {
@@ -16,39 +16,58 @@ export function FavoritesProvider({ children }) {
   }, [favorites]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
+    let cancelled = false;
 
-      if (currentUser) {
-        try {
-          await appCheckReady;
-          const docRef = doc(db, 'users', currentUser.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            const cleanFavs = (data.favorites || []).map(item => String(item).trim());
-            setFavorites(cleanFavs);
-          } else {
-            setFavorites([]);
-          }
-        } catch (error) {
-          console.error("❌ خطأ في جلب المفضلة من السيرفر:", error);
-          setFavorites([]); 
-        }
-      } else {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (cancelled) return;
+
+      setUser(currentUser);
+      setAuthLoading(false);
+
+      if (!currentUser) {
         setFavorites([]);
+        return;
       }
 
-      setAuthLoading(false);
+      try {
+        await Promise.race([
+          appCheckReady,
+          new Promise(resolve => setTimeout(resolve, 3000))
+        ]);
+
+        if (cancelled) return;
+
+        const docRef = doc(db, 'users', currentUser.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (cancelled) return;
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const cleanFavs = Array.isArray(data.favorites)
+            ? data.favorites.map(item => String(item).trim()).filter(Boolean)
+            : [];
+          setFavorites(cleanFavs);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('❌ خطأ في جلب المفضلة:', error);
+        }
+      }
     });
 
-    return () => unsubscribe();
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, []);
 
   const toggleFav = async (scholarshipId) => {
-    if (!user) return false;
+    if (!user?.uid) return false;
 
     const stringId = String(scholarshipId).trim();
+    if (!stringId) return false;
+
     const currentFavs = favoritesRef.current;
     const isExist = currentFavs.includes(stringId);
     const updatedFavs = isExist
@@ -62,7 +81,7 @@ export function FavoritesProvider({ children }) {
       await setDoc(docRef, { favorites: updatedFavs }, { merge: true });
       return true;
     } catch (error) {
-      console.error("❌ فشل تحديث السيرفر:", error);
+      console.error('❌ فشل تحديث السيرفر:', error);
       setFavorites(currentFavs);
       return false;
     }

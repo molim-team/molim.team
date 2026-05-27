@@ -31,14 +31,14 @@ if (typeof window !== "undefined") {
       provider: new ReCaptchaV3Provider(siteKey),
       isTokenAutoRefreshEnabled: true
     });
-    // انتظر حتى يجهز أول توكن قبل أي طلب Firestore
-    appCheckReady = getToken(appCheck, /* forceRefresh */ false)
-      .then(() => {
-        console.log("✅ App Check token جاهز");
-      })
-      .catch((err) => {
-        console.warn("⚠️ فشل جلب App Check token، المتابعة على أي حال:", err);
-      });
+    
+    appCheckReady = getToken(appCheck, false)
+  .then(() => {
+    console.log("✅ App Check جاهز");
+  })
+  .catch((err) => {
+    console.warn("⚠️ App Check فشل، المتابعة على أي حال:", err);
+  });
   }
 }
 

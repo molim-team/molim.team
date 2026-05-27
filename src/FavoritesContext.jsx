@@ -1,9 +1,27 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db, appCheckReady } from './firebase-config';
+import { auth, db } from './firebase-config';
 
 const FavoritesContext = createContext();
+
+const getStorageKey = (uid) => `favorites_${uid}`;
+
+const loadLocal = (uid) => {
+  try {
+    const raw = localStorage.getItem(getStorageKey(uid));
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveLocal = (uid, favs) => {
+  try {
+    localStorage.setItem(getStorageKey(uid), JSON.stringify(favs));
+  } catch {}
+};
 
 export function FavoritesProvider({ children }) {
   const [favorites, setFavorites] = useState([]);
@@ -21,22 +39,22 @@ export function FavoritesProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (cancelled) return;
 
-      setUser(currentUser);
       setAuthLoading(false);
+      setUser(currentUser);
 
       if (!currentUser) {
+        // مسح المفضلة عند الخروج
         setFavorites([]);
         return;
       }
 
+      const localFavs = loadLocal(currentUser.uid);
+      if (localFavs.length > 0) {
+        setFavorites(localFavs);
+      }
+
+      // زامن مع Firestore في الخلفية
       try {
-        await Promise.race([
-          appCheckReady,
-          new Promise(resolve => setTimeout(resolve, 3000))
-        ]);
-
-        if (cancelled) return;
-
         const docRef = doc(db, 'users', currentUser.uid);
         const docSnap = await getDoc(docRef);
 
@@ -44,15 +62,14 @@ export function FavoritesProvider({ children }) {
 
         if (docSnap.exists()) {
           const data = docSnap.data();
-          const cleanFavs = Array.isArray(data.favorites)
+          const serverFavs = Array.isArray(data.favorites)
             ? data.favorites.map(item => String(item).trim()).filter(Boolean)
             : [];
-          setFavorites(cleanFavs);
+          setFavorites(serverFavs);
+          saveLocal(currentUser.uid, serverFavs);
         }
       } catch (error) {
-        if (!cancelled) {
-          console.error('❌ خطأ في جلب المفضلة:', error);
-        }
+        console.warn('Firestore غير متاح، نستخدم البيانات المحلية:', error);
       }
     });
 
@@ -75,14 +92,14 @@ export function FavoritesProvider({ children }) {
       : [...currentFavs, stringId];
 
     setFavorites(updatedFavs);
+    saveLocal(user.uid, updatedFavs);
 
     try {
       const docRef = doc(db, 'users', user.uid);
       await setDoc(docRef, { favorites: updatedFavs }, { merge: true });
       return true;
     } catch (error) {
-      console.error('❌ فشل تحديث السيرفر:', error);
-      setFavorites(currentFavs);
+      console.error('فشل تحديث Firestore:', error);
       return false;
     }
   };

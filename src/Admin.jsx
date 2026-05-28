@@ -147,21 +147,6 @@ function Admin() {
     }
   };
 
-  const handleDeleteScholarship = async (index) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذه المنحة نهائياً؟')) return;
-    try {
-      const targetList = [...scholarships];
-      const targetTitle = targetList[index].name || targetList[index].title;
-      targetList.splice(index, 1);
-      const fileData = await fetchGitHubFile();
-      await saveGitHubFile(fileData.sha, targetList, `حذف منحة: ${targetTitle}`);
-      alert('✅ تم الحذف بنجاح من الخادم!');
-      handleLoadScholarships();
-    } catch (e) {
-      alert(`❌ فشل الحذف: ${e.message}`);
-    }
-  };
-
   const handleOpenEditModal = (index) => {
     const s = scholarships[index];
     setEditingIndex(index);
@@ -249,23 +234,23 @@ function Admin() {
 
       <div className="token-bar">
         <label>🔑 التوكن الخاص بـ GitHub (مطلوب للتحقق)</label>
-        <input 
-          type="password" 
-          placeholder="أدخل التوكن هنا..." 
+        <input
+          type="password"
+          placeholder="أدخل التوكن هنا..."
           value={token}
           onChange={(e) => setToken(e.target.value)}
         />
       </div>
 
       <div className="tabs">
-        <button 
-          className={`tab-btn ${activeTab === 'add' ? 'active' : 'inactive'}`} 
+        <button
+          className={`tab-btn ${activeTab === 'add' ? 'active' : 'inactive'}`}
           onClick={() => setActiveTab('add')}
         >
           ➕ إضافة منحة
         </button>
-        <button 
-          className={`tab-btn ${activeTab === 'manage' ? 'active' : 'inactive'}`} 
+        <button
+          className={`tab-btn ${activeTab === 'manage' ? 'active' : 'inactive'}`}
           onClick={() => { setActiveTab('manage'); handleLoadScholarships(); }}
         >
           📋 إدارة المنح
@@ -343,9 +328,9 @@ function Admin() {
               </div>
             ))}
             <button type="button" className="btn-add-file" onClick={() => addFileField('add', 'requiredFiles')}>+ إضافة مستند إجباري</button>
-            
+
             <hr className="section-divider"/>
-            
+
             <p className="sub-title-file">📎 الملفات الاختيارية</p>
             {addForm.optionalFiles.map((file, i) => (
               <div key={i} className="file-row">
@@ -357,11 +342,10 @@ function Admin() {
           </div>
 
           <div className="form-group">
-            <label>رابط التتقديم للموقع الرسمي</label>
+            <label>رابط التقديم للموقع الرسمي</label>
             <input type="url" placeholder="https://..." value={addForm.link} onChange={e => setAddForm({...addForm, link: e.target.value})} />
           </div>
 
-          {/* روابط مجموعات Telegram */}
           <div className="files-section">
             <h4>📣 روابط مجموعات Telegram</h4>
             <div className="form-group">
@@ -389,7 +373,7 @@ function Admin() {
           <button className="btn-submit" style={{ marginBottom: '15px' }} onClick={handleLoadScholarships}>
             🔄 تحديث ومزامنة القائمة
           </button>
-          
+
           {loadingList ? (
             <p style={{ textAlign: 'center', color: '#888' }}>⏳ جاري سحب المنح وتحديثات السيرفر...</p>
           ) : scholarships.length === 0 ? (
@@ -404,7 +388,6 @@ function Admin() {
                   </div>
                   <div className="item-btns">
                     <button className="btn-edit" onClick={() => handleOpenEditModal(index)}>✏️ تعديل</button>
-                    <button className="btn-delete" onClick={() => handleDeleteScholarship(index)}>🗑️ حذف</button>
                   </div>
                 </div>
               ))}
@@ -487,9 +470,9 @@ function Admin() {
                 </div>
               ))}
               <button type="button" className="btn-add-file" onClick={() => addFileField('edit', 'requiredFiles')}>+ إضافة مستند إجباري</button>
-              
+
               <hr className="section-divider"/>
-              
+
               <p className="sub-title-file">📎 الملفات الاختيارية</p>
               {editForm.optionalFiles.map((file, i) => (
                 <div key={i} className="file-row">
@@ -505,7 +488,6 @@ function Admin() {
               <input type="url" value={editForm.link} onChange={e => setEditForm({...editForm, link: e.target.value})} />
             </div>
 
-            {/* تعديل روابط مجموعات Telegram */}
             <div className="files-section">
               <h4>📣 روابط مجموعات Telegram</h4>
               <div className="form-group">

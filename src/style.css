@@ -617,7 +617,7 @@ footer p {
 .details-hero {
   text-align: center;
   padding: 40px 20px;
-  background: var(--page-hero-bg);
+  background: #ffffff !important;
   border-radius: 12px;
   margin-bottom: 30px;
   transition: background 0.5s ease;
@@ -655,14 +655,14 @@ footer p {
 }
 
 .details-card p {
-  color: var(--text-color);
+  color: var(--secondary-color);
   line-height: 1.8;
   margin-bottom: 8px;
   transition: color 0.5s ease;
 }
 
 .details-card ul li {
-  color: var(--text-color);
+  color: var(--secondary-color);
   padding: 8px 0;
   border-bottom: 1px solid var(--card-border);
   line-height: 1.6;
@@ -1600,8 +1600,8 @@ footer p {
 }
 
 .details-hero {
-  background: linear-gradient(135deg, #1e3c72, #2a5298);
-  color: #fff;
+  background: var(--hero-bg-gradient);
+  color: #ff4500;
   padding: 40px;
   border-radius: 15px;
   margin-bottom: 30px;
@@ -1618,11 +1618,13 @@ footer p {
 }
 
 .details-hero h1 {
+  color: #ff4500;
   margin-top: 15px;
   font-size: 2.2rem;
 }
 
 .details-hero p {
+  color: #ff4500;
   opacity: 0.9;
   margin-top: 10px;
 }
@@ -1655,12 +1657,12 @@ footer p {
   border-bottom: 2px solid #eee;
   padding-bottom: 10px;
   margin-bottom: 15px;
-  color: #1e3c72;
+  color: #1a3a6e;
 }
 
 .card-text {
   line-height: 1.8;
-  color: var(--text-color, #333);
+  color: #1a3a6e;
 }
 
 .benefits-list, .requirements-list {
@@ -1673,7 +1675,7 @@ footer p {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--text-color, #333);
+  color: #1a3a6e;
 }
 
 .benefits-list li i {
@@ -1686,7 +1688,7 @@ footer p {
   align-items: flex-start;
   gap: 10px;
   line-height: 1.6;
-  color: var(--text-color, #333);
+  color: #1a3a6e;
 }
 
 .requirements-list li i {

@@ -194,7 +194,6 @@ function Quiz() {
           <div className="progress-bar-wrap">
             <div className="progress-bar-fill" style={{ width: `${progressPct}%` }}></div>
           </div>
-          <div className="progress-label">السؤال {toArabicNum(currentQ + 1)} من {toArabicNum(QUESTIONS_DATA.length)}</div>
           
           <div className="question-card">
             <div className="q-step">السؤال {toArabicNum(currentQ + 1)} من {toArabicNum(QUESTIONS_DATA.length)}</div>

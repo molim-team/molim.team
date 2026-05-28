@@ -101,7 +101,7 @@ function Scholarship() {
         ) : (
           <>
             <div className="details-hero">
-              {scholarship.flag && (scholarship.flag.startsWith('http') || scholarship.flag.endsWith('png')) ? (
+              {scholarship.flag && scholarship.flag.startsWith('http') ? (
                 <img src={scholarship.flag} alt="flag" className="details-flag" />
               ) : (
                 <span className="details-flag">{scholarship.flag || ''}</span>
@@ -193,7 +193,7 @@ function Scholarship() {
               {scholarship.groupLink && scholarship.discussionLink && (
                 <div className="btn-split">
                   <a href={scholarship.groupLink} target="_blank" rel="noreferrer" className="btn-main btn-split-half">
-                    👥 قروب المنحة
+                    👥 قناة المنحة
                   </a>
                   <a href={scholarship.discussionLink} target="_blank" rel="noreferrer" className="btn-main btn-split-half">
                     💬 مناقشة المنحة 
@@ -222,4 +222,4 @@ function Scholarship() {
   );
 }
 
-export default Scholarship;
+export default Scholarship;

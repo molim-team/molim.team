@@ -491,7 +491,7 @@ function Admin() {
             <div className="files-section">
               <h4>📣 روابط مجموعات Telegram</h4>
               <div className="form-group">
-                <label>🔗 رابط قروب المنحة</label>
+                <label>🔗 رابط قناة المنحة</label>
                 <input type="url" placeholder="https://t.me/..." value={editForm.groupLink} onChange={e => setEditForm({...editForm, groupLink: e.target.value})} />
               </div>
               <div className="form-group">

@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-
-// تعريف التخصصات الـ 35 المأخوذة من كود عمرو الأصلي
 const MAJORS_DATA = {
   cs_ai:       { name: 'الذكاء الاصطناعي وعلوم البيانات',       field: 'علوم الحاسب', desc: 'بناء نماذج التعلم الآلي، تحليل البيانات الضخمة، ومعالجة اللغة الطبيعية' },
   cs_soft:     { name: 'هندسة البرمجيات وتطوير التطبيقات',      field: 'علوم الحاسب', desc: 'تصميم وبناء التطبيقات والأنظمة البرمجية الكبيرة' },
@@ -69,9 +67,9 @@ const QUESTIONS_DATA = [
 const rankEmojis = ['🥇','🥈','🥉','4️⃣','5️⃣'];
 
 function Quiz() {
-  const [screen, setScreen] = useState('intro'); // intro, quiz, results
+  const [screen, setScreen] = useState('intro');
   const [currentQ, setCurrentQ] = useState(0);
-  const [answers, setAnswers] = useState({}); // { 0: Set([1, 2]) }
+  const [answers, setAnswers] = useState({}); 
   const [calculatedResults, setCalculatedResults] = useState([]);
 
   const toArabicNum = (n) => {
@@ -222,7 +220,7 @@ function Quiz() {
           </div>
 
           <div className="quiz-nav">
-            <button className="btn-secondary" style={{ visibility: currentQ === 0 ? 'hidden' : 'visible' }} onClick={prevQuestion}>السابق</button>
+            <button className="btn-primary" style={{ visibility: currentQ === 0 ? 'hidden' : 'visible' }} onClick={prevQuestion}>السابق</button>
             <button className="btn-primary" disabled={currentSelected.size === 0} onClick={nextQuestion}>
               {currentQ === QUESTIONS_DATA.length - 1 ? 'عرض النتائج' : 'التالي'}
             </button>
@@ -275,9 +273,9 @@ function Quiz() {
             })}
           </div>
 
-          <div className="results-actions">
+          <div className="results-actions" style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
             <button className="btn-primary" onClick={() => alert('سيتم الربط مع صفحة المنح الشاملة لاحقاً')}>استعرض المنح المتاحة</button>
-            <button className="btn-secondary" onClick={() => setScreen('intro')}>أعد الاختبار</button>
+            <button className="btn-primary" onClick={() => setScreen('intro')}>أعد الاختبار</button>
           </div>
         </div>
       )}

@@ -276,7 +276,7 @@ function Admin() {
           </div>
           <div className="form-group">
             <label>علم الدولة </label>
-            <input type="text" placeholder="مثال: 🇹🇷" value={addForm.flag} onChange={e => setAddForm({...addForm, flag: e.target.value})} />
+            <input type="text" placeholder="مثال: https://flagcdn.com/w40/XX.png" value={addForm.flag} onChange={e => setAddForm({...addForm, flag: e.target.value})} />
           </div>
           <div className="form-group">
             <label>المراحل الدراسية</label>
@@ -328,7 +328,7 @@ function Admin() {
           </div>
           <div className="form-group">
             <label>📚 التخصصات المتاحة (افصل بينها بفاصلة ,)</label>
-            <input type="text" placeholder="مثال: هندسة برمجيات, ذكاء اصطناعي, هندسة حاسوب" value={addForm.majors} onChange={e => setAddForm({...addForm, majors: e.target.value})} />
+            <input type="text" placeholder="مثال: كلية الطب" value={addForm.majors} onChange={e => setAddForm({...addForm, majors: e.target.value})} />
           </div>
 
           <div className="files-section">

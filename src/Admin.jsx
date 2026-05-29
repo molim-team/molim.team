@@ -531,7 +531,7 @@ function Admin() {
               <textarea value={editForm.notes} onChange={e => setEditForm({...editForm, notes: e.target.value})}></textarea>
             </div>
 
-            <button className="btn-save" onClick={handleSaveEdit}>💾 حفظ التعديلات وإرسال للمستودع</button>
+            <button className="btn-save" onClick={handleSaveEdit}>💾 حفظ التعديلات </button>
           </div>
         </div>
       )}

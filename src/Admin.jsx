@@ -233,7 +233,7 @@ function Admin() {
       <h1>🎛️ لوحة تحكم مُلم</h1>
 
       <div className="token-bar">
-        <label>🔑 التوكن الخاص بـ GitHub (مطلوب للتحقق)</label>
+        <label>🔑 التوكن الخاص (مطلوب للتحقق)</label>
         <input
           type="password"
           placeholder="أدخل التوكن هنا..."
@@ -275,7 +275,7 @@ function Admin() {
             <input type="text" placeholder="مثال: تركيا" value={addForm.country} onChange={e => setAddForm({...addForm, country: e.target.value})} />
           </div>
           <div className="form-group">
-            <label>رمز الدولة (علم الـ Emoji)</label>
+            <label>علم الدولة </label>
             <input type="text" placeholder="مثال: 🇹🇷" value={addForm.flag} onChange={e => setAddForm({...addForm, flag: e.target.value})} />
           </div>
           <div className="form-group">

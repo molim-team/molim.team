@@ -18,7 +18,7 @@ function Admin() {
   const initialFormState = {
     title: '', enTitle: '', country: '', flag: '', degree: '', language: '',
     status: 'open', open_date: '', deadline: '', desc: '', notes: '', link: '',
-    benefits: '', requirements: '', majors: '',
+    benefits: [''], requirements: [''], majors: '',
     groupLink: '', discussionLink: '',
     requiredFiles: [''], optionalFiles: ['']
   };
@@ -104,8 +104,8 @@ function Admin() {
       degree: addForm.degree.trim(),
       language: addForm.language.trim(),
       description: addForm.desc.trim(),
-      benefits: addForm.benefits.split(',').map(s => s.trim()).filter(Boolean),
-      requirements: addForm.requirements.split(',').map(s => s.trim()).filter(Boolean),
+      benefits: addForm.benefits.map(s => s.trim()).filter(Boolean),
+      requirements: addForm.requirements.map(s => s.trim()).filter(Boolean),
       majors: addForm.majors.split(',').map(s => s.trim()).filter(Boolean),
       open_date: addForm.open_date,
       deadline: addForm.deadline,
@@ -163,8 +163,8 @@ function Admin() {
       open_date: s.open_date || '',
       deadline: s.deadline || '',
       desc: s.description || s.desc || '',
-      benefits: Array.isArray(s.benefits) ? s.benefits.join(', ') : s.benefits || '',
-      requirements: Array.isArray(s.requirements) ? s.requirements.join(', ') : s.requirements || '',
+      benefits: Array.isArray(s.benefits) ? (s.benefits.length ? s.benefits : ['']) : (s.benefits ? s.benefits.split(',').map(x => x.trim()) : ['']),
+      requirements: Array.isArray(s.requirements) ? (s.requirements.length ? s.requirements : ['']) : (s.requirements ? s.requirements.split(',').map(x => x.trim()) : ['']),
       majors: Array.isArray(s.majors) ? s.majors.join(', ') : s.majors || '',
       link: s.link || '',
       notes: s.notes || '',
@@ -198,8 +198,8 @@ function Admin() {
         degree: editForm.degree.trim(),
         language: editForm.language.trim(),
         description: editForm.desc.trim(),
-        benefits: editForm.benefits.split(',').map(s => s.trim()).filter(Boolean),
-        requirements: editForm.requirements.split(',').map(s => s.trim()).filter(Boolean),
+        benefits: editForm.benefits.map(s => s.trim()).filter(Boolean),
+        requirements: editForm.requirements.map(s => s.trim()).filter(Boolean),
         majors: editForm.majors.split(',').map(s => s.trim()).filter(Boolean),
         open_date: editForm.open_date,
         deadline: editForm.deadline,
@@ -305,13 +305,26 @@ function Admin() {
             <label>وصف المنحة (قصير)</label>
             <textarea placeholder="اكتب وصفاً مختصراً يظهر في بطاقة المنحة الدراسية الرئيسيّة..." value={addForm.desc} onChange={e => setAddForm({...addForm, desc: e.target.value})}></textarea>
           </div>
-          <div className="form-group">
-            <label>المميزات (افصل بين كل ميزة بفاصلة ,)</label>
-            <input type="text" placeholder="مثال: رسوم دراسية كاملة, سكن معيشي, راتب شهري" value={addForm.benefits} onChange={e => setAddForm({...addForm, benefits: e.target.value})} />
+          <div className="files-section">
+            <p className="sub-title-file">🎁 المميزات</p>
+            {addForm.benefits.map((item, i) => (
+              <div key={i} className="file-row">
+                <input type="text" placeholder="مثال: رسوم دراسية كاملة" value={item} onChange={e => handleFileTypeChange('add', 'benefits', i, e.target.value)} />
+                <button type="button" className="btn-remove-file" onClick={() => removeFileField('add', 'benefits', i)}>✕</button>
+              </div>
+            ))}
+            <button type="button" className="btn-add-file" onClick={() => addFileField('add', 'benefits')}>+ إضافة ميزة</button>
           </div>
-          <div className="form-group">
-            <label>الشروط (افصل بين كل شرط بفاصلة ,)</label>
-            <input type="text" placeholder="مثال: شهادة الثانوية العامة, إجادة اللغة الإنجليزية" value={addForm.requirements} onChange={e => setAddForm({...addForm, requirements: e.target.value})} />
+
+          <div className="files-section">
+            <p className="sub-title-file">📋 الشروط</p>
+            {addForm.requirements.map((item, i) => (
+              <div key={i} className="file-row">
+                <input type="text" placeholder="مثال: شهادة الثانوية العامة" value={item} onChange={e => handleFileTypeChange('add', 'requirements', i, e.target.value)} />
+                <button type="button" className="btn-remove-file" onClick={() => removeFileField('add', 'requirements', i)}>✕</button>
+              </div>
+            ))}
+            <button type="button" className="btn-add-file" onClick={() => addFileField('add', 'requirements')}>+ إضافة شرط</button>
           </div>
           <div className="form-group">
             <label>📚 التخصصات المتاحة (افصل بينها بفاصلة ,)</label>
@@ -349,11 +362,11 @@ function Admin() {
           <div className="files-section">
             <h4>📣 روابط مجموعات Telegram</h4>
             <div className="form-group">
-              <label>🔗 رابط قروب المنحة</label>
+              <label>🔗 رابط قناة المنحة</label>
               <input type="url" placeholder="https://t.me/..." value={addForm.groupLink} onChange={e => setAddForm({...addForm, groupLink: e.target.value})} />
             </div>
             <div className="form-group">
-              <label>💬 رابط قروب مناقشة المنحة</label>
+              <label>💬 رابط مناقشة المنحة</label>
               <input type="url" placeholder="https://t.me/..." value={addForm.discussionLink} onChange={e => setAddForm({...addForm, discussionLink: e.target.value})} />
             </div>
           </div>
@@ -447,13 +460,26 @@ function Admin() {
               <label>وصف المنحة (قصير)</label>
               <textarea value={editForm.desc} onChange={e => setEditForm({...editForm, desc: e.target.value})}></textarea>
             </div>
-            <div className="form-group">
-              <label>المميزات</label>
-              <input type="text" value={editForm.benefits} onChange={e => setEditForm({...editForm, benefits: e.target.value})} />
+            <div className="files-section">
+              <p className="sub-title-file">🎁 المميزات</p>
+              {editForm.benefits.map((item, i) => (
+                <div key={i} className="file-row">
+                  <input type="text" value={item} onChange={e => handleFileTypeChange('edit', 'benefits', i, e.target.value)} />
+                  <button type="button" className="btn-remove-file" onClick={() => removeFileField('edit', 'benefits', i)}>✕</button>
+                </div>
+              ))}
+              <button type="button" className="btn-add-file" onClick={() => addFileField('edit', 'benefits')}>+ إضافة ميزة</button>
             </div>
-            <div className="form-group">
-              <label>الشروط</label>
-              <input type="text" value={editForm.requirements} onChange={e => setEditForm({...editForm, requirements: e.target.value})} />
+
+            <div className="files-section">
+              <p className="sub-title-file">📋 الشروط</p>
+              {editForm.requirements.map((item, i) => (
+                <div key={i} className="file-row">
+                  <input type="text" value={item} onChange={e => handleFileTypeChange('edit', 'requirements', i, e.target.value)} />
+                  <button type="button" className="btn-remove-file" onClick={() => removeFileField('edit', 'requirements', i)}>✕</button>
+                </div>
+              ))}
+              <button type="button" className="btn-add-file" onClick={() => addFileField('edit', 'requirements')}>+ إضافة شرط</button>
             </div>
             <div className="form-group">
               <label>📚 التخصصات</label>
